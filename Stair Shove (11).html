@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stair Shove</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2ecff;--fg:#241a3d;--card:#fff;--line:#d9cff5;--acc:#ff5a3c;--mut:#6f6590;--top:#2a1f4d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15112a;--fg:#f1ecff;--card:#211b3f;--line:#352d63;--mut:#a59bd0;--top:#0e0a20}}
+:root[data-theme="dark"]{--bg:#15112a;--fg:#f1ecff;--card:#211b3f;--line:#352d63;--mut:#a59bd0;--top:#0e0a20}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px system-ui,sans-serif;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}
+#top{display:flex;gap:8px;align-items:center;padding:7px 10px;background:var(--top);color:#fff;flex-wrap:wrap}
+.brand{font:20px 'Lilita One',Impact,sans-serif;letter-spacing:.5px;color:#ffd23f;text-shadow:0 2px 0 #7a2d00}
+.chip{background:rgba(255,255,255,.12);border-radius:999px;padding:4px 11px;font-weight:700;font-size:13px}
+#top .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.ibtn{background:rgba(255,255,255,.12);border:0;border-radius:999px;color:#fff;padding:4px 10px;font-size:14px;cursor:pointer}
+#main{flex:1;display:flex;flex-direction:column;min-height:0}
+@media(min-width:820px){#main{flex-direction:row}#panel{max-height:none!important;width:400px;flex:none!important;border-top:0!important;border-left:1px solid var(--line)}}
+#stage{position:relative;flex:1.3;min-height:250px;overflow:hidden}
+canvas{width:100%;height:100%;display:block;touch-action:manipulation}
+#res,#title{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,8,35,.55);backdrop-filter:blur(2px)}
+#title{display:flex;flex-direction:column;gap:10px;text-align:center;color:#fff;background:rgba(15,8,35,.5)}
+.logo{font:64px/0.95 'Lilita One',Impact,sans-serif;color:#ffd23f;text-shadow:0 4px 0 #b3401a,0 8px 0 #4a1a0a,0 0 30px rgba(255,160,40,.5);transform:rotate(-3deg);animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:rotate(-3deg) translateY(-6px)}}
+#title p{margin:0;color:#d9d0ff;max-width:300px}#title small{color:#a59bd0}
+.box{background:var(--card);border-radius:18px;padding:16px 22px;max-width:88%;text-align:center;border:3px solid #ffd23f;box-shadow:0 10px 40px rgba(0,0,0,.5);animation:pop .25s ease-out}
+@keyframes pop{from{transform:scale(.8);opacity:0}}
+.box h2{margin:0 0 8px;font:22px 'Lilita One',Impact,sans-serif;color:var(--acc)}
+.box .g{display:grid;grid-template-columns:auto auto;gap:3px 18px;text-align:left;margin:10px 0}
+.box .g span:nth-child(even){text-align:right;font-weight:800}
+.big{background:linear-gradient(#ff7a4a,#e63a1a);color:#fff;border:0;border-bottom:4px solid #9a2410;border-radius:14px;padding:10px 26px;font:20px 'Lilita One',Impact,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(230,58,26,.4)}
+.big:active{transform:translateY(2px);border-bottom-width:2px}.big:disabled{background:var(--line);color:var(--mut);border-color:var(--line);box-shadow:none}
+#panel{flex:1;overflow:auto;padding:8px;min-height:0;max-height:46vh;border-top:1px solid var(--line);background:var(--bg)}
+.tabs{display:flex;gap:6px;margin-bottom:8px;position:sticky;top:-8px;background:var(--bg);padding:8px 0 4px;z-index:2}.tabs button{flex:1;padding:7px 4px;border:0;border-bottom:3px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;cursor:pointer;font-weight:700}
+.tabs button.on{background:var(--acc);color:#fff;border-bottom-color:#9a2410}
+.card{display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:10px;padding:6px 8px;margin-bottom:6px}
+.card .ic{font-size:22px;width:30px;text-align:center}.card .tx{flex:1;line-height:1.25}.card small{color:var(--mut)}
+.card button{min-width:80px;padding:8px 4px;border:0;border-bottom:3px solid #1d7a3a;border-radius:9px;background:linear-gradient(#35c866,#25a850);color:#fff;font-weight:800;cursor:pointer}
+.card button:active{transform:translateY(1px)}.card button:disabled{background:var(--line);border-color:var(--line);color:var(--mut);cursor:default}
+.card.lock{opacity:.5}.lv{font-size:11px;color:var(--mut)}
+.filt{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}.filt button{padding:5px 10px;border:0;border-bottom:3px solid var(--line);background:var(--card);color:var(--fg);border-radius:9px;cursor:pointer;font-weight:700;font-size:12px}.filt button.on{background:var(--fg);color:var(--bg)}.filt input{flex:1;min-width:90px;padding:5px 8px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+.bar{height:8px;background:var(--line);border-radius:4px;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(#ff9a4a,#ff5a3c);border-radius:4px}
+#toast{position:fixed;top:48px;right:8px;display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:9}
+#toast div{background:#241a3d;color:#fff;border-left:4px solid gold;padding:7px 11px;border-radius:8px;animation:t 4s forwards;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+@keyframes t{0%{opacity:0;transform:translateX(30px)}8%,85%{opacity:1;transform:none}100%{opacity:0}}
+</style></head><body>
+<div id="top"><b class="brand">🪜 STAIR SHOVE</b><span class="chip">💰 $<span id="cash">0</span></span><span class="chip">⭐ <span id="fame">0</span></span><span class="chip" id="stairs"></span><span class="r"><button id="auto" class="ibtn" style="display:none"></button><button id="mute" class="ibtn">🔊</button><label class="chip">🩸 <input type="checkbox" id="bl"></label></span></div>
+<div id="main"><div id="stage"><canvas id="cv"></canvas><div id="title"><div class="logo">STAIR<br>SHOVE</div><p id="tstats"></p><button class="big" id="play">▶ PLAY</button><small>Click or press Space</small></div><div id="res"><div class="box" id="box"></div></div></div><div id="panel"></div></div>
+<div id="toast"></div>
+<script>
+// ===== TESTING: set to true for infinite money (also unlocks every upgrade and lets you reboot any time) =====
+const CHEAT_INFINITE_MONEY=false;
+const $=id=>document.getElementById(id),cv=$('cv'),ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*DPR;cv.height=H*DPR}
+const DEFST={streak:0,perfects:0,limbs:0,boosts:0,bought:0,reboots:0,blood:0,maxStairs:0,hits:0,flips:0,heads:0,steps:0,crits:0,jackpots:0,dmg:0,hz:{},lb:[0,0,0,0,0,0,0,0,0,0],skinRuns:{},maxDummies:1,synergies:0,pr:{},meals:{},bestJump:0,packs:0};
+const DEF={cash:0,earned:0,total:0,fame:0,best:0,runs:0,lv:{},ach:{},skin:0,blood:1,hideMax:0,mute:0,abil:{boost:1},eq:'boost',pack:0,autoOn:1,st:DEFST};
+function load(){try{const j=JSON.parse(localStorage.getItem('stairshove5'));if(j){const o=Object.assign(structuredClone(DEF),j);o.st=Object.assign(structuredClone(DEFST),j.st||{});return o}}catch(e){}return structuredClone(DEF)}
+let S=load();
+function save(){try{localStorage.setItem('stairshove4',JSON.stringify(S))}catch(e){}}
+const SUF=['','K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];
+function fmt(n){n=Math.floor(n);if(n<1000)return''+n;const e=Math.min(SUF.length-1,Math.floor(Math.log10(n)/3));return(n/10**(e*3)).toFixed(2).replace(/\.?0+$/,'')+SUF[e]}
+const lv=id=>S.lv[id]||0,rnd=a=>a[Math.random()*a.length|0],pc=p=>Math.round(p*1000)/10+'%';
+// ================= UPGRADES (every one hand-named and hand-written) =================
+const LN=['Torso','Skull','Left Bicep','Left Forearm','Right Bicep','Right Forearm','Left Thigh','Left Shin','Right Thigh','Right Shin'];
+const LG=['torso','head','bic','fore','bic','fore','thigh','shin','thigh','shin'];
+const UP=[];
+// pf = how many levels always work; levels above that only work on perfect shoves
+function u(id,n,i,k,p,b,g,m,d,pf){if(pf!=null&&m>pf)d+=` Level${m>pf+1?'s '+(pf+1)+'-'+m:' '+m} only work${m>pf+1?'':'s'} on perfect shoves.`;UP.push({id,n,i,k,p,b,g,m,d,pf})}
+u('push','Stronger Shove','💪','push',.35,15,1.35,10,'+0.35 launch power.',6);
+u('morestairs','More Stairs','🪜','more',1,30,1.17,0,'Adds 2 more stairs every time you buy it. No limit!');
+u('master','Master Builder','🏗️','master',1,25000,2,10,'Every More Stairs purchase adds +1 extra stair, including the ones you already bought.');
+u('escalator','Escalator','🛗','esc',1,3000,1.9,5,'The stairs become an escalator carrying him back up. More levels = a faster belt and longer runs.');
+u('boing','Boing','🏀','bounce',.03,80,1.6,5,'+3% bounciness.');
+u('punch','Stair Punch','🥊','punchN',1,1500,1.9,3,'+1 step with a piston under it. When he lands on it, the whole step shoots up, a fist comes out, and he gets punched off the stairs.');
+u('charges','Extra Charges','🔋','charges',1,250,2,8,'+1 spacebar ability use per run.',4);
+u('greenzone','Bigger Green Zone','🟢','pw',.012,40,1.6,5,'+1.2% wider green zone on the shove bar.');
+u('combotimer','Longer Combo Timer','⏳','comboWin',.05,60,1.6,6,'+0.05s before your combo runs out.');
+u('hits','Heavier Hits','🔨','dmg',.06,50,1.5,6,'+6% damage on every hit.',3);
+u('slowmeter','Slower Meter','🐌','slow',.06,100,1.7,5,'-6% shove bar speed.');
+u('bones','Tough Bones','🦴','hp',.12,400,1.8,5,'+12% limb health.',3);
+u('floaty','Floaty Gravity','🎈','air',.03,450,1.8,5,'-3% gravity. He hangs in the air longer.');
+u('crit','Critical Eye','🎯','crit',.03,600,1.9,5,'+3% crit chance. Crits deal triple damage.',3);
+u('heavy','Heavy Gravity','⚓','grav',.03,700,1.8,5,'+3% gravity. He falls faster and hits harder.');
+u('comboins','Combo Insurance','🛟','comboKeep',.06,900,1.8,5,'+6% chance a combo about to expire keeps going.');
+u('salesman','Staircase Salesman','🧑‍💼','stairDisc',.06,1200,1.9,5,'-6% price on More Stairs.');
+u('record','Record Bonus','🏆','rec',.1,1000,1.8,5,'+10% bonus cash when you beat your best damage.');
+u('comp','Workers Comp','🏥','limbPay',.02,1500,1.9,10,'+2% run cash for every limb lost.');
+u('tape','Duct Tape','🩹','saves',1,2000,2.2,3,'+1 save per run: a limb that would break survives with 30% health instead.',2);
+u('coupon','Coupon Book','🏷️','coupon',.05,2000,2,5,'-5% on everything in the shop.');
+u('autopilot','Autopilot','🤖','auto',1,3000,2,3,'+1 automatic Boost per run when he stalls out.');
+u('autopusher','Autopusher','🦾','autop',1,2e6,3,5,'Shoves for you and restarts every run. 20% chance of a perfect shove, +15% per extra level. Toggle it in the top bar.');
+u('landmine','Landmine','💣','mines',1,8000,2,3,'+1 landmine per run. When he stalls out it blows for big damage and cash.');
+u('creaky','Creaky Steps','🪵','creak',.03,900,1.9,5,'+3% of the steps are rotten. Landing on one cracks it for heavy damage and flings him downhill.');
+u('headstart','Head Start','🏁','hs',1,400,1.8,5,'+10% health and +$20 at the start of every run.',2);
+u('highroller','High Roller','🎲','hr',1,6000,2.2,5,'You lose 15% of every run\'s cash, but 2% of runs pay out 12x. Each level cuts the loss by 3%.');
+u('trampoline','Trampoline Stairs','🟦','tramp',.04,2000,1.8,5,'+4% of the steps turn into strong trampolines that launch him high.');
+u('bandaid','Band-Aid','🧷','bands',1,60000,2.4,3,'Broken limbs get reattached shortly after. Fixes up to 3 limbs per run, +1 per level.',2);
+u('powerpack','Power Pack','🎁','pack',1,800,1,0,'Adds a Power Pack to your queue. Your next run gets +20% cash, +25% health, +25% damage and 2 free Band-Aids. Buy as many as you like.');
+u('ballerina','Ballerina','🩰','ball',.8,400,1.7,5,'Every flip pays cash.',3);
+u('gymnast','Gymnast','🤸','gym',1,5000,2,3,'Flipping again before landing pays far more cash each time.',2);
+u('wrecking','Wrecking Ball','🪩','wreck',.15,600,1.7,5,'+15% damage while he is spinning.',3);
+u('top','Spinning Top','🪀','top',1,1500,1.7,5,'Once he is spinning he keeps spinning longer.');
+u('nodiving','No Diving','🏊','nodive',.25,700,1.7,5,'+25% cash on head hits.',3);
+u('glass','Glass Bones','🥃','glass',1,2500,2,4,'+150% damage on your first impact each run, but -10% bone strength.');
+u('comboext','Combo Extension','⏱️','comboExt',.2,1800,1.8,5,'+0.2s of combo time after every hit that grows a combo.',3);
+u('ignition','Combo Ignition','🔥','ignite',1,4000,2.2,3,'Hard hits that start a combo give you extra time to keep it going.',2);
+u('hotstart','Hot Start','🏎️','startCombo',1,3500,1.8,6,'+1 combo at the start of every run.',3);
+u('doubletap','Double Tap','👆','dtap',1,1200,1.8,5,'Hitting the same limb twice in a row deals double damage. +25% more per extra level.',3);
+u('longjump','Long Jump','🚩','lj',1,6000,1,1,'Distance flags appear on the grass past the stairs. Skid farther for up to +30% cash.');
+u('highjump','High Jump','📏','hj',1,7000,2.2,3,'Shows how high he gets above the stairs. Higher jumps pay more cash at the end.');
+u('critpower','Critical Power','💥','critPow',.4,5000,1.8,5,'+0.4x crit damage.',3);
+u('perfectstreak','Perfect Streak','✨','pstreak',.03,9000,1.9,5,'+3% cash per perfect shove in a row (up to 10 in a row).');
+u('momentum','Momentum','💨','speed',.06,1100,1.7,5,'+6% damage that scales with how fast he hits.',3);
+u('sponsors','Sponsorships','🤝','spons',.04,3500,2.2,5,'+4% cash on everything.',3);
+u('paparazzi','Paparazzi','📸','papa',.2,2500,1.9,5,'+20% cash on crits.');
+u('replay','Instant Replay','🎬','finale',.5,2200,1.9,5,'Your biggest hit of the run pays out again at the end: +50% of its cash.');
+u('dynamite','Dynamite Steps','🧨','dyn',1,14000,1.8,5,'+1 rigged step: it blows up when he lands for damage, cash and a launch.');
+u('rocketpad','Rocket Pads','🚀','rocket',1,30000,1.9,5,'+1 launch pad on the stairs that fires him forward and up.');
+u('cannon','Cannon','🛢️','cannon',1,120000,2,4,'+1 cannon on the stairs that shoots him far down.');
+u('arc','Higher Launch Arc','📈','hop',.1,300,1.6,5,'+10% launch height. Even stronger on perfect shoves.');
+u('dizzy','Dizzy Launch','😵','spin',.2,250,1.6,5,'+20% launch spin. Even stronger on perfect shoves.');
+const SCAP={coupon:.25,spons:.2,crit:.5,air:.15,grav:.2,pw:.2,slow:.6,hp:1,stairDisc:.3,comboKeep:.5,comboWin:1.5};
+const KEYS=[...new Set(UP.map(q=>q.k))];
+const ORDER=[...UP].sort((a,b)=>a.b-b.b);
+let E={},ST={};
+const cost=q=>q.k=='pack'?q.b:Math.floor(q.b*q.g**lv(q.id)*(1-ST.coupon)*(q.id=='morestairs'?1-ST.stairDisc:1)),maxed=q=>q.m&&lv(q.id)>=q.m,unlocked=q=>S.earned>=q.b*.35||lv(q.id)>0;
+function calc(perf){ST={};for(const k of KEYS)ST[k]=0;for(const q of UP){let l=lv(q.id);if(q.pf!=null&&!perf)l=Math.min(l,q.pf);if(l)ST[q.k]+=l*q.p}for(const k in SCAP)ST[k]=Math.min(SCAP[k],ST[k])}
+const hpMult=()=>Math.max(.3,1+ST.hp+.1*ST.hs-.1*ST.glass);
+// ================= SPACEBAR ABILITIES =================
+const ABIL=[['boost','Boost','🚀','Fires him up and forward. Great for reaching more stairs.',0],['flip','Frontflip','🤸','Spins him forward, fast. Flips pay bonus cash.',500],['back','Backflip','🔄','Spins him backward, fast.',500],['slam','Ground Pound','⏬','Slams him straight down so he hits the next step hard.',1500],['brake','Emergency Brake','🛑','Kills almost all of his speed so he stays on the stairs longer.',6000],['rush','Adrenaline Rush','⚡','For 2 seconds: +50% cash, +50% damage, and his limbs heal 25%.',30000]];
+// ================= ACHIEVEMENTS (all hand-named) =================
+const AC_=[];let R;
+function A(id,n,d,t){AC_.push({id,n,d,t})}
+const geo=(a,k,c)=>Array.from({length:c},(_,i)=>+(a*k**i).toPrecision(2)),rr=()=>R||{},nAch=()=>Object.keys(S.ach).length,achM=()=>1+Math.min(.5,.005*nAch());
+const LF=(key,names,list,dfn,pred)=>list.forEach((v,i)=>A(key+i,names[i],dfn(v),()=>pred(v)));
+LF('dmg',['Ow.','Ow Ow.','Ow Ow Ow Ow.','That Probably Hurt.','Medical Student Fascinated','Legal Department Notified','Insurance Adjuster Weeps','Physicist Calls It Impossible','The Stairs Filed a Complaint','Gravity Needs a Vacation','Seismologists Alerted','Moon Dust Disturbed','Planetary Impact','Newton Resigns','Einstein Shrugs','Black Hole Jr.','Heat Death Speedrun','Retroactive Big Bang','Unit Conversion Error','Calculator Overflow'],geo(100,4,20),v=>`Deal ${fmt(v)} damage in one run`,v=>rr().dmg>=v);
+LF('hit',['Big Hit','Whack','Wallop','Mega Bonk','The Hit Heard Round the World','Seismic Smack','Continental Drift','Planet Cracker','Star Smasher','Galaxy Brain Hit','Cosmic Clobber','Reality Dent'],geo(100,5,12),v=>`Land a single ${fmt(v)} damage hit`,v=>rr().best>=v);
+LF('earn',['Pocket Lint','Lunch Money','Rent Money','Used Car','Down Payment','Luxury Sedan','Mansion','Yacht','Private Jet','Private Island','Small Country','Space Program','Dyson Sphere','Galactic Treasury','Universe Economy','Heat Death Fund'],geo(1e3,6,16),v=>`Earn $${fmt(v)} total`,v=>S.total>=v);
+LF('rc',['Tip Jar','Decent Shift','Overtime Pay','Bonus Round','Big Payday','Windfall','Lottery Win','Fat Stack','Briefcase','Armored Truck','Bank Vault','Treasure Fleet'],geo(100,8,12),v=>`Earn $${fmt(v)} in a single run`,v=>rr().cash>=v);
+LF('runs',['First Step Down','Getting the Hang of It','Regular','Stair Enthusiast','Stairmaster','Is This Still a Job?','Career Pusher','Union Member','Stairs Lifer',"Gravity's Best Friend",'Part of the Furniture','Eternal Pusher'],[1,5,10,25,50,100,250,500,1000,2500,5000,10000],v=>`Complete ${v} run${v>1?'s':''}`,v=>S.runs>=v);
+LF('tdmg',['Rookie Season','Rising Star','Veteran','All-Star','MVP','Hall of Famer','Living Legend','Folk Hero','Myth','Deity','Cosmic Entity','Beyond'],geo(1e3,10,12),v=>`Deal ${fmt(v)} damage across your career`,v=>S.st.dmg>=v);
+LF('blood',['Paper Cut','Nosebleed','Bucket List','Bathtub','Crimson Tide','Red Sea','Horror Movie','Slasher Flick','Gore Fest','Blood Bank','Vampire Buffet','Scarlet Ocean'],geo(1e3,3,12),v=>`Spill ${fmt(v)} blood droplets`,v=>S.st.blood>=v);
+LF('combo',['Combo Starter','Double Digits','On a Roll','Hot Streak','Unstoppable','Combo Maniac','Fifty Alive','Combo God','Century of Pain'],[5,10,15,20,30,40,50,75,100],v=>`Reach a ${v}x combo in one run`,v=>rr().maxC>=v);
+LF('flip',['Somersault','Tumbleweed','Gymnast Material','Human Wheel','Washing Machine','Beyblade','Dizzy Tornado','Ceiling Fan','Blender'],[3,5,10,15,20,30,50,75,100],v=>`Do ${v} flips in one run`,v=>rr().flips>=v);
+LF('rstep',['Down the Hall','A Real Flight','Long Way Down','Half a Hundred','Stairs Have Seen Things','Century Staircase','Stairway to Weather','Stairs Are a Geographic Feature','Where Do These Lead?','Staircase to the Moon'],[10,20,30,50,75,100,150,200,300,500],v=>`Reach step ${v} in one run`,v=>rr().step>=v);
+LF('head',['Headache','Head Case','Hard Head, Soft Floor','Concussion Protocol','Bonkers'],[3,5,10,20,50],v=>`${v} head hits in one run`,v=>rr().heads>=v);
+LF('streak',['Nice Form','High Five','Perfect Ten','Metronome','Robot'],[3,5,10,20,50],v=>`${v} perfect shoves in a row`,v=>S.st.streak>=v);
+LF('uses',['Hold My Beer','Button Masher','Spacebar Enthusiast','Spacebar Is Worn Out','Keyboard Warrior'],[1,10,50,200,1000],v=>`Use your spacebar ability ${v} time${v>1?'s':''}`,v=>S.st.boosts>=v);
+LF('buy',['Capitalism','Impulse Buyer','Window Shopper','Shopaholic','Whale Watching'],[10,25,50,100,250],v=>`Buy ${v} upgrade levels`,v=>S.st.bought>=v);
+LF('reb',['Reboot the Franchise','Sequel Syndrome','Cinematic Universe','Hollywood Has No Ideas','Eternal Franchise'],[1,2,3,5,9],v=>`Reboot the franchise ${v} time${v>1?'s':''}`,v=>S.st.reboots>=v);
+LF('fame',['Local Fame','Household Name','Stairs Icon','Celebrity','Legend'],[5,10,25,100,500],v=>`Hold ${v} Fame`,v=>S.fame>=v);
+LF('crun',['Critical Thinking','Lucky Streak','Loaded Dice','Crit Machine'],[1,3,5,10],v=>`Land ${v} crit${v>1?'s':''} in one run`,v=>rr().crits>=v);
+LF('lostn',['Compound Fracture','Two For One','Triple Threat','Some Assembly Required','Half a Dummy','Parts Are Parts','Lucky Seven','Mostly Torso','Almost Nothing','Total Teardown Tuesday'],[1,2,3,4,5,6,7,8,9,10],v=>`Lose ${v} limb${v>1?'s':''} in one run`,v=>rr().lost>=v);
+LF('time',['Taking Their Time','Leisurely Descent','Marathon Man','Is He Still Going?','Epic Tumble'],[10,20,30,45,60],v=>`Keep a run going for ${v}+ seconds`,v=>rr().time>=v);
+LF('crowd',['Buddy System','Crowd of Three','Four-Way Fall','Fist Bump Squad','Half Dozen Tumblers','Seven Samurai','Octo-Tumble','Cloud Nine Dummies','Perfect Ten Pile-Up'],[2,3,4,5,6,7,8,9,10],v=>`Push ${v} dummies at once`,v=>S.st.maxDummies>=v);
+LF('skinu',['Wardrobe Change','Fashion Week','Walking Closet','Costume Shop','Full Wardrobe'],[3,6,10,15,20],v=>`Unlock ${v} skins`,v=>SK.filter(k=>nAch()>=k[3]).length>=v);
+LF('comp',['Getting Started','Trophy Case','Overachiever','Obsessed','Stair Scholar','Platinum Pusher'],[10,25,50,100,150,200],v=>`Unlock ${v} awards`,v=>nAch()>=v);
+const SKN=['Crash Dummy','Traffic Cone','Clown','Cowboy','Knight','Ninja','Pizza Guy','Astronaut','Zombie','Skeleton','Ghost','Robot','Golden Dummy','Rainbow Dummy','Wizard','Pirate','Chef','Viking','Santa','Bunny'];
+const br=(r,...i)=>r.br&&i.every(k=>r.br[k]),ty=(r,t)=>r.types&&r.types[t],us=(r,t)=>r.used&&r.used[t];
+[['hands','Hands Off','Lose both forearms in one run',r=>br(r,3,5)],['disarm','Disarmed and Dangerous','Lose all four arm pieces',r=>br(r,2,3,4,5)],['footloose','Footloose','Lose both shins',r=>br(r,7,9)],['pegleg','Peg Leg Pete','Lose a thigh and the shin below it',r=>br(r,6,7)||br(r,8,9)],['nolegs','Hop Along','Lose all four leg pieces',r=>br(r,6,7,8,9)],['armless','Armless Hero','Lose both upper arms',r=>r.armless],['legless','Stand Down','Lose both thighs',r=>r.legless],['haircut','Haircut','Lose only the head',r=>r.lost==1&&br(r,1)],['headless','Off With His Head','Lose the head in the first 3 seconds',r=>r.fastHead],['leftie','Left Behind','Lose every left limb',r=>br(r,2,3,6,7)],['rightie','All Right Then','Lose every right limb',r=>br(r,4,5,8,9)],['torsoonly','Just a Torso','Lose all 9 other pieces, keep the torso',r=>r.lost>=9&&!r.tear],['symm','Perfect Symmetry','Lose exactly both biceps and nothing else',r=>r.lost==2&&br(r,2,4)],['tear','Total Teardown','Break the torso',r=>r.tear],
+['purist','Purist','10K damage without using your spacebar ability',r=>r.dmg>=1e4&&r.bu==0],['intact','Surprisingly Intact','100K damage, zero limbs lost',r=>r.dmg>=1e5&&r.lost==0],['flat','Flat Landing','10K damage with zero flips',r=>r.dmg>=1e4&&r.flips==0],['onebig','One Big Hit','Half your damage from a single hit',r=>r.dmg>1e3&&r.best>=r.dmg*.5],['cuts','Death by a Thousand Cuts','60+ hits and none over 4% of your damage',r=>r.hits>=60&&r.best<r.dmg*.04],['bodywork','Full Body Workout','Hit with all six body parts in one run',r=>r.gh&&Object.keys(r.gh).length>=6],['jp','JACKPOT!','Hit the High Roller jackpot',r=>r.jp],['comeback','Comeback Kid','Lose 5+ limbs and still deal 10K',r=>r.lost>=5&&r.dmg>=1e4],['ducttape','Held Together by Tape','Use a Duct Tape save',r=>r.savedOnce],['autopilot','Autopilot Engaged','Trigger an auto-boost',r=>r.auto>0],['wiggle','Wiggle Wiggle','Get wiggled loose after getting stuck',r=>r.wiggled],['stumble','Stumbled Out','Tip over the edge on his own',r=>r.stumbled],['bottoms','Bottoms Up','Reach the bottom of the stairs',r=>r.nn>=10&&r.step>=r.nn],['stuck','Stuck Landing','Reach the bottom with every limb intact',r=>r.nn>=10&&r.step>=r.nn&&r.lost==0],['domino','Domino Effect','3+ dummies all reach the bottom',r=>r.dn>=3&&r.fin>=r.dn],['syncfall','Synchronized Falling','4+ dummies all reach the bottom',r=>r.dn>=4&&r.fin>=r.dn],
+['boomtown','Boom Town','Get blown up by dynamite steps',r=>ty(r,'dyn')],['liftoff','Houston, We Have Liftoff','Hit a rocket pad',r=>ty(r,'rocket')],['cannonball','Human Cannonball','Get shot out of the cannon',r=>ty(r,'cannon')],['punchdrunk','Punch Drunk','Get punched by a stair piston',r=>r.punched],['rotten','Rotten to the Core','Crack a creaky step',r=>r.creaked],['parting','Parting Gift','Set off a landmine',r=>r.mined],['bandaidsol','Band-Aid Solution','Get a limb reattached',r=>r.banded],['junkie','Adrenaline Junkie','Use Adrenaline Rush',r=>us(r,'rush')],['brakecheck','Brake Check','Use Emergency Brake',r=>us(r,'brake')],['groundpound','Ground and Pound','Use Ground Pound',r=>us(r,'slam')],['frontflipper','Frontflip Fanatic','Use Frontflip',r=>us(r,'flip')],['backflipper','Back Flip Believer','Use Backflip',r=>us(r,'back')],['longjumper','Long Jumper','Skid past a distance flag',r=>r.ljPct>0],['allflags','Gold Medal Distance','Reach the +30% flag',r=>r.ljPct>=.3],['highflyer','High Flyer','Get 60 above the stairs',r=>r.jump>=60],['sky','Orbital Insertion','Get 120 above the stairs',r=>r.jump>=120],['sparkgen','Spark of Genius','Light a Combo Ignition',r=>r.ign],['twicenice','Twice as Nice','Land a Double Tap',r=>r.dt],['glasscannon','Glass Cannon','Land a Glass Bones first hit',r=>r.glassHit],['chainflip','Chain Reaction','Chain 3 flips without touching down',r=>r.airflips>=3],['longchain','Olympic Routine','Chain 6 flips without touching down',r=>r.airflips>=6],['prepared','Well Prepared','Use a Power Pack',r=>r.pack],['highstakes','High Stakes','Lose cash to High Roller',r=>r.hrLoss>0],['bull1','Bullseye','Hit the red bar on the shove meter',r=>r.bull],['bull5','Dead Center','Hit 5 bullseyes',()=>S.st.bulls>=5],['bull25','Sharpshooter','Hit 25 bullseyes',()=>S.st.bulls>=25],['bull100','Robin Hood','Hit 100 bullseyes',()=>S.st.bulls>=100],['replay1','Encore!','Get paid by Instant Replay',r=>r.replayed],
+['gand','Gandhi','Wait 30s before shoving',null],['nap','Nap Time','Wait 60s before shoving',null],['oops','Oops','Barely push him',null],['bigticket','Big Ticket Item','Buy something for $1M+',null],['maxed','Maxed Out','Max out an upgrade',null],['reboot1','Fresh Start','Reboot with at least 10 Fame gained',null],['broke','Broke Again','Spend everything on one upgrade',null],['squeam','Squeamish','Turn the blood off',null],['silent','Silent Treatment','Mute the game',null],['skindeep','Skin Deep','Wear a new skin',null],['coupon','Coupon Clipper','Buy a Coupon Book',null],['handsfree','Hands-Free','Buy the Autopusher',null],['escalnow','Escalator to Nowhere','Buy the Escalator',null],['firstability','Button Shopping','Buy a new spacebar ability',null],['switcher','Switcheroo','Equip a different spacebar ability',null]]
+ .forEach(([id,n,d,t])=>A(id,n,d,t&&(()=>t(rr()))));
+const chk=()=>{for(const a of AC_)if(a.t&&!S.ach[a.id]&&a.t())award(a.id)};
+function award(id){if(S.ach[id])return;S.ach[id]=1;const a=AC_.find(x=>x.id==id);toast('🏆 '+a.n+' — '+a.d);dirty=1}
+function toast(t){const T=$('toast');while(T.children.length>4)T.firstChild.remove();const d=document.createElement('div');d.textContent=t;T.appendChild(d);setTimeout(()=>d.remove(),4100)}
+// ================= SKINS =================
+const SK=[[SKN[0],'#ffcf3f','#222',0],[SKN[1],'#ff7a1a','#331',3],[SKN[2],'#ee3b3b','#222',6],[SKN[3],'#c98b4a','#2b1a0a',10],[SKN[4],'#9aa3b0','#222',15],[SKN[5],'#2b2b33','#000',21],[SKN[6],'#e8c34a','#7a1a10',28],[SKN[7],'#e8eef5','#445',36],[SKN[8],'#7ea35a','#243018',45],[SKN[9],'#eeeeee','#333',55],[SKN[10],'#cfe8ff','#6a8aa8',66],[SKN[11],'#8fb0c8','#233',78],[SKN[12],'#ffd700','#7a5a00',90],[SKN[13],'rb','#222',103],[SKN[14],'#6a3fb5','#222',117],[SKN[15],'#3b3b46','#111',131],[SKN[16],'#f4f4f4','#888',146],[SKN[17],'#b0703a','#3a2210',162],[SKN[18],'#cc2a2a','#600',178],[SKN[19],'#f1d8e3','#a88',195]];
+function tint(h,l){if(h=='rb')return`hsl(${(performance.now()/8)%360},85%,${58-l*10}%)`;const c=[1,3,5].map(i=>parseInt(h.substr(i,2),16)),t=[122,26,16],k=l*.26;return`rgb(${c.map((v,i)=>Math.round(v+(t[i]-v)*k)).join(',')})`}
+function hat(i){const c=ctx;c.save();
+ const P=(a,f,s)=>{c.beginPath();a.forEach((q,j)=>j?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.closePath();if(f){c.fillStyle=f;c.fill()}if(s){c.strokeStyle=s;c.lineWidth=1.5;c.stroke()}},C=(x,y,r,f)=>{c.fillStyle=f;c.beginPath();c.arc(x,y,r,0,7);c.fill()},Ee=(x,y,rx,ry,f)=>{c.fillStyle=f;c.beginPath();c.ellipse(x,y,rx,ry,0,0,7);c.fill()};
+ switch(i){
+ case 1:P([[-9,-8],[9,-8],[0,-30]],'#ff7a1a','#331');c.fillStyle='#fff';c.fillRect(-5,-18,10,3);break;
+ case 2:C(-11,-4,6,'#ff8a1a');C(11,-4,6,'#ff8a1a');C(0,-13,6,'#ff8a1a');C(7,2,3.5,'#e22');P([[-4,-17],[4,-17],[0,-27]],'#2b6fe0');break;
+ case 3:Ee(0,-8,17,4,'#7a4a1a');c.fillStyle='#8a5a22';c.fillRect(-8,-21,16,13);c.fillStyle='#5a3510';c.fillRect(-8,-12,16,3);break;
+ case 4:c.fillStyle='#8b94a3';c.beginPath();c.arc(0,-1,12,Math.PI,0);c.fill();c.fillStyle='#333';c.fillRect(-12,-2,24,4);Ee(0,-15,3,6,'#d22');break;
+ case 5:c.fillStyle='#111';c.fillRect(-11,-7,22,5);c.strokeStyle='#111';c.lineWidth=3;c.beginPath();c.moveTo(-11,-5);c.lineTo(-19,-1);c.moveTo(-11,-5);c.lineTo(-18,-8);c.stroke();c.fillStyle='#fff';c.fillRect(1,-1,8,2);break;
+ case 6:c.fillStyle='#d22';c.beginPath();c.arc(0,-2,11,Math.PI,0);c.fill();c.fillRect(2,-6,14,3);C(-3,-8,2.5,'#fff');break;
+ case 7:c.strokeStyle='#bfe6ff';c.lineWidth=3;c.fillStyle='rgba(200,230,255,.3)';c.beginPath();c.arc(0,0,15,0,7);c.fill();c.stroke();break;
+ case 8:c.fillStyle='#33401f';c.fillRect(-8,-12,5,4);c.fillRect(0,-13,6,4);C(-3,0,2.2,'#fff');C(-3,0,1,'#000');c.strokeStyle='#243018';c.lineWidth=1.5;c.beginPath();c.moveTo(-5,6);c.lineTo(7,6);c.stroke();for(let x=-4;x<7;x+=3){c.beginPath();c.moveTo(x,4);c.lineTo(x,8);c.stroke()}break;
+ case 9:C(-3,-1,3,'#111');C(5,-1,3,'#111');P([[0,3],[2,6],[-2,6]],'#111');c.fillStyle='#111';c.fillRect(-5,8,11,1.5);break;
+ case 10:P([[-13,4],[-12,-12],[0,-18],[12,-12],[13,4],[8,1],[3,5],[-3,1],[-8,5]],'rgba(255,255,255,.75)','#9ab');break;
+ case 11:c.strokeStyle='#555';c.lineWidth=2;c.beginPath();c.moveTo(0,-10);c.lineTo(0,-20);c.stroke();C(0,-22,3,'#e22');c.fillStyle='#111';c.fillRect(-6,-3,5,4);c.fillRect(2,-3,5,4);break;
+ case 12:P([[-9,-9],[-9,-21],[-4,-14],[0,-23],[4,-14],[9,-21],[9,-9]],'#ffd700','#a07800');break;
+ case 13:c.strokeStyle=`hsl(${(performance.now()/6)%360},90%,60%)`;c.lineWidth=3;c.beginPath();c.ellipse(0,-18,9,3,0,0,7);c.stroke();break;
+ case 14:P([[-11,-8],[11,-8],[2,-35]],'#5a2ea6','#222');Ee(0,-8,15,3.5,'#5a2ea6');C(-3,-18,1.5,'#ff0');C(3,-26,1.5,'#ff0');break;
+ case 15:P([[-15,-6],[0,-18],[15,-6]],'#222');C(0,-11,2.5,'#fff');C(5,0,3.2,'#111');break;
+ case 16:C(-5,-16,6,'#fff');C(5,-16,6,'#fff');C(0,-20,6,'#fff');c.fillStyle='#fff';c.fillRect(-9,-14,18,6);c.strokeStyle='#999';c.lineWidth=1;c.strokeRect(-9,-14,18,6);break;
+ case 17:c.fillStyle='#8b8f97';c.beginPath();c.arc(0,-1,11,Math.PI,0);c.fill();P([[-10,-6],[-18,-14],[-14,-4]],'#f4f1e6');P([[10,-6],[18,-14],[14,-4]],'#f4f1e6');break;
+ case 18:P([[-10,-8],[10,-8],[6,-26],[-2,-30]],'#d22');c.fillStyle='#fff';c.fillRect(-11,-11,22,4);C(-2,-30,3.5,'#fff');break;
+ case 19:Ee(-5,-21,3,10,'#f1d8e3');Ee(5,-21,3,10,'#f1d8e3');Ee(-5,-21,1.4,7,'#f6a9c1');Ee(5,-21,1.4,7,'#f6a9c1');break;
+ }
+ c.restore()}
+// ================= AUDIO =================
+let AX,NB;const ac=()=>AX=AX||new(window.AudioContext||window.webkitAudioContext)();
+function tone(f,d,type='square',v=.04,f2){if(S.mute)return;try{const a=ac(),o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,a.currentTime);if(f2)o.frequency.exponentialRampToValueAtTime(f2,a.currentTime+d);g.gain.setValueAtTime(v,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d)}catch(e){}}
+function noise(d,v=.05,lp=1200){if(S.mute)return;try{const a=ac();if(!NB){NB=a.createBuffer(1,a.sampleRate,a.sampleRate);const b=NB.getChannelData(0);for(let i=0;i<b.length;i++)b[i]=Math.random()*2-1}const s=a.createBufferSource();s.buffer=NB;const f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=lp;const g=a.createGain();g.gain.setValueAtTime(v,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);s.connect(f);f.connect(g);g.connect(a.destination);s.start();s.stop(a.currentTime+d)}catch(e){}}
+const beep=(f,d=.08,v=.04)=>tone(f,d,'square',v);
+const thud=imp=>{const k=Math.min(1,imp/14);tone(120,.12,'sine',.03+.1*k,45);noise(.09,.02+.05*k,900)};
+const snap=()=>{noise(.25,.1,3500);tone(220,.15,'sawtooth',.05,60)},boom=()=>{noise(.5,.14,500);tone(70,.4,'sine',.14,28)},whoosh=()=>{noise(.3,.06,4000);tone(250,.25,'sawtooth',.025,900)};
+// ================= WORLD (ragdoll physics unchanged) =================
+const SW=70,SH=44,X0=300,Y0=300,G=.14,K={gx:.015,e:.3,ft:.985,dm:.3,base:.25,win:.12,gate:6};
+const LB=[['torso',[0,-34],[0,-62],160,5,5],['head',[0,-62],[0,-80],70,3,10],['lUA',[0,-60],[-9,-46],50,3,3],['lFA',[-9,-46],[-11,-30],40,3,3],['rUA',[0,-60],[9,-46],50,3,3],['rFA',[9,-46],[11,-30],40,3,3],['lTh',[0,-34],[-6,-17],70,4,4],['lSh',[-6,-17],[-7,0],55,4,4],['rTh',[0,-34],[6,-17],70,4,4],['rSh',[6,-17],[7,0],55,4,4]];
+const HIP=0,HEAD=3;
+const JT0=[[1,0,-.6,.9,2,1],[2,0,-2.6,2.6,4,1],[3,2,-2.4,.2,6,5],[4,0,-2.6,2.6,8,1],[5,4,-2.4,.2,10,9],[6,0,-2,.7,12,0],[7,6,0,2.5,14,13],[8,0,-2,.7,16,0],[9,8,0,2.5,18,17]];
+let n,rects,haz,D=[],pts,LM,JT,CD,mode='ready',cam={x:X0+160,y:Y0+100,zm:1},shake=0,pops=[],parts=[],stains=[],meter={v:0,d:1},readyT=0,dirty=1,TR=new Set(),CR=new Set(),PUN={},resultT=0,escPhase=0,ZC=.5;
+let freeze=0,punch=0,flashA=0,started=false,lastFreeze=-99;const FNT='"Lilita One",Impact,system-ui,sans-serif';
+const BULL=.008,mw=()=>.08+ST.pw,newZone=()=>{ZC=.22+Math.random()*.56};
+const wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a};
+const ang=i=>Math.atan2(pts[2*i+1].y-pts[2*i].y,pts[2*i+1].x-pts[2*i].x);
+const cur=d=>{CD=d;pts=d.pts;LM=d.LM;JT=d.JT};
+const nDummies=()=>Math.min(10,1+S.st.reboots);
+const skinsOn=()=>SK.filter(k=>nAch()>=k[3]).length;
+const cashM=()=>(1+.15*S.fame)*achM()*(1+ST.spons)*((R&&R.rush>R.f)?1.5:1)*((R&&R.pack)?1.2:1);
+const rebootNeed=()=>25000*6**S.st.reboots;
+const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const LJ=[[750,.05],[1300,.1],[1850,.15],[2400,.2],[2950,.25],[3500,.3]];
+function makeDummy(i){
+ const sx=X0-14-i*26,sy=Y0-4,P=[];
+ const lm=LB.map((l,i2)=>{[1,2].forEach(k=>{const q=l[k];P.push({x:sx+q[0],y:sy+q[1],px:sx+q[0],py:sy+q[1],r:k==1?l[4]:l[5],cd:0,l:i2,head:i2==1&&k==2})});const hp=l[3]*hpMult();return{n:l[0],hp,max:hp,lvl:0,broken:0,bleed:0,fix:0,len:Math.hypot(l[2][0]-l[1][0],l[2][1]-l[1][1])}});
+ const d={i,pts:P,LM:lm,JT:null,pa:null,ang:0,av:0,bs:99,rest:0,air:99,touch:0,gf:-99,done:0,fl:0,ice:0,pg:sx,pgf:0,fin:0,cb:0,last:-999,hf:0,kicks:0,nudged:0,xw:0,ign:0,ll:-1,llf:-99,af:0,cr:{},spn:null};
+ cur(d);d.JT=JT0.map(j=>({c:j[0],p:j[1],lo:j[2],hi:j[3],a:j[4],b:j[5],rest:wrap(ang(j[0])-ang(j[1]))}));return d}
+// all stair geometry lives in rects: 0 = top platform, 1..n-1 = stairs, n = floor, n+1 = the step that rises out of the floor on an escalator
+function layout(full){
+ const sw=SW*escPhase,sh=SH*escPhase;
+ if(full){for(let j=1;j<n;j++){const q=rects[j];q.l=X0+(j-1)*SW-sw;q.r=q.l+SW;q.t=Y0+j*SH-sh;q.base=q.t}
+  const x=rects[n+1];if(ST.esc){x.l=X0+(n-1)*SW-sw;x.r=x.l+SW;x.t=Y0+n*SH-sh;x.base=x.t}else{x.t=1e9;x.base=1e9}}
+ for(const j in PUN){const q=rects[j],pu=PUN[j];if(!full){q.base=Y0+j*SH;q.t=q.base}q.t=q.base-pu.off;q.s=pu.s}
+ for(const z of haz){const q=rects[z.k];z.x=(q.l+q.r)/2;z.y=q.t-14}
+}
+function escWrap(){ // the escalator has moved everything up by one step: the same steps now sit one index lower
+ const nP={};for(const j in PUN)if(j>1)nP[j-1]=PUN[j];PUN=nP;
+ const f=set=>new Set([...set].filter(j=>j>1).map(j=>j-1));CR=f(CR);TR=f(TR);
+ haz=haz.filter(z=>{z.k--;return z.k>=1});
+ for(const d of D){const c={};for(const j in d.cr)if(j>1)c[j-1]=1;d.cr=c}
+}
+function build(){
+ n=10+(2+ST.master)*ST.more;escPhase=0;
+ rects=[{l:-1e5,r:X0,t:Y0,base:Y0}];
+ for(let j=1;j<n;j++)rects.push({l:X0+(j-1)*SW,r:X0+j*SW,t:Y0+j*SH,base:Y0+j*SH});
+ rects.push({l:X0+(n-1)*SW,r:1e5,t:Y0+n*SH,base:Y0+n*SH});rects.push({l:0,r:0,t:1e9,base:1e9});
+ haz=[];const used={},list=[];
+ for(const t of['dyn','rocket','cannon'])for(let c=0;c<ST[t];c++)list.push(t);
+ shuf(list);list.length=Math.min(list.length,Math.max(0,n-3));
+ list.forEach((t,i)=>{let k=Math.min(n-1,2+Math.floor((i+Math.random()*.8)/list.length*(n-3)));let g=0;while(used[k]&&g++<n)k=k>=n-1?2:k+1;if(used[k])return;used[k]=1;haz.push({t,k,x:0,y:0,hit:0,h:{}})});
+ const free=[];for(let j=2;j<n-1;j++)if(!used[j])free.push(j);shuf(free);let fi=0;const take=c=>{const r=[];for(let q=0;q<c&&fi<free.length;q++)r.push(free[fi++]);return r};
+ CR=new Set(take(ST.creak>0?Math.max(1,Math.floor(n*ST.creak)):0));TR=new Set(take(ST.tramp>0?Math.max(1,Math.floor(n*ST.tramp)):0));
+ PUN={};take(ST.punchN).forEach(j=>PUN[j]={t:0,who:-1,limb:0,done:{},off:0,s:0});
+ layout(true);
+ D=[];for(let i=0;i<nDummies();i++)D.push(makeDummy(i));cur(D[0]);
+ S.st.maxStairs=Math.max(S.st.maxStairs,n);
+}
+function shove(){
+ beep(300,.1);const m=meter.v,perf=Math.abs(m-ZC)<mw()/2,bull=Math.abs(m-ZC)<BULL;
+ const hp0=hpMult();calc(perf);const hpr=hpMult()/hp0; // perfect shoves unlock the top levels of the strongest upgrades
+ const pack=S.pack>0;if(pack){S.pack--;S.lv.powerpack=S.pack}
+ R={f:0,dmg:0,cash:0,hitCash:0,bonusCash:0,best:0,bestCash:0,heads:0,flips:0,maxC:0,boost:2+ST.charges,bu:0,hz:0,crits:0,lost:0,time:0,flash:0,perf,bull,hits:0,step:0,lastBoost:-999,lastHaz:-999,burst:0,nextCrit:0,done:{},types:{},br:{},gh:{},dn:D.length,nn:n,fin:0,saves:ST.saves,auto:0,savedOnce:0,wiggled:0,stumbled:0,mines:ST.mines,bands:(ST.bands>0?2+ST.bands:0)+(pack?2:0),pack,rush:0,jump:0,used:{},airflips:0,ps:0};
+ const pm=perf?1.7:1;
+ D.forEach((d,di)=>{cur(d);LM.forEach(l=>{const f=hpr*(pack?1.25:1);l.max*=f;l.hp*=f});
+  const jf=di?1+(Math.random()-.5)*.25:1,pw=(2.6+ST.push)*(.5+.5*m)*(perf?1.35:1)*jf,w=.014*pw*(1+ST.spin*pm)*(di?1+(Math.random()-.5)*.5:1),h0=pts[HIP];
+  pts.forEach(p=>{const f=1+(Y0-4-p.y)/160,dx=p.x-h0.x,dy=p.y-h0.y;p.px=p.x-pw*f/2+dy*w/2;p.py=p.y+pw*(.4+ST.hop*pm)/2-dx*w/2});d.pg=pts[HIP].x});
+ cur(D[0]);
+ if(perf){S.st.perfects++;S.st.streak++;R.ps=Math.min(10,S.st.streak);pop(pts[HEAD].x,pts[HEAD].y-30,bull?'BULLSEYE! x1.5 CASH':'PERFECT SHOVE!',bull?'#ff5a5a':'#ffd23f',26)}else S.st.streak=0;
+ if(bull)S.st.bulls=(S.st.bulls||0)+1;
+ if(ST.hs){S.cash+=20*ST.hs;pop(pts[HIP].x,pts[HIP].y-60,'HEAD START +$'+20*ST.hs,'#9f9',16)}
+ if(pack)pop(pts[HIP].x,pts[HIP].y-80,'POWER PACK!','#ffd23f',20);
+ if(m<.1)award('oops');if(readyT>1800)award('gand');if(readyT>3600)award('nap');
+ S.st.maxDummies=Math.max(S.st.maxDummies,D.length);
+ mode='run';
+}
+function win(){return(K.win+ST.comboWin)*60}
+function pop(x,y,t,c,s=18){pops.push({x,y,t,c,s,l:60})}
+function bonus(base,label,col,mul=1){
+ let g=(base+R.dmg*.15)*cashM()*mul;const room=Math.max(0,R.hitCash+25*cashM()-R.bonusCash);g=Math.min(g,room);if(g<=0)return;
+ R.bonusCash+=g;R.cash+=g;S.cash+=g;S.earned+=g;S.total+=g;pop(pts[HIP].x,pts[HIP].y-50,label+' +'+fmt(g),col,22)}
+function spray(x,y,k,sp=4){if(!S.blood)return;S.st.blood+=k;const vx=R&&pts?(pts[HIP].x-pts[HIP].px)*.4:0;for(let i=0;i<k&&parts.length<1800;i++)parts.push({x,y,vx:(Math.random()-.5)*sp*2+vx,vy:-Math.random()*sp-1,l:110,c:Math.random()<.5?'#a8101a':'#d4202b',s:1.5+Math.random()*2.2,b:1})}
+function dmgLimb(i,a){
+ const L=LM[i];if(L.broken)return;L.hp-=a;const l2=Math.min(3,Math.floor(4*(1-L.hp/L.max)));
+ if(L.hp<=0)breakLimb(i);else if(l2>L.lvl){L.lvl=l2;pop(pts[2*i+1].x,pts[2*i+1].y-14,'CRACK!','#f84',13);beep(120,.08);spray(pts[2*i+1].x,pts[2*i+1].y,8,3)}
+}
+function breakLimb(i){
+ const L=LM[i];
+ if(R.saves>0){R.saves--;R.savedOnce=1;L.hp=L.max*.3;L.lvl=2;pop(pts[2*i+1].x,pts[2*i+1].y-20,'DUCT TAPE!','#9f9',18);return}
+ L.hp=0;L.lvl=3;L.broken=1;L.bleed=220;R.br[i]=1;S.st.lb[i]++;
+ if(i==0){LM.forEach((l,j)=>{if(!l.broken)R.br[j]=1;l.broken=1;l.lvl=Math.max(l.lvl,2);l.bleed=120});R.tear=1}
+ if(i==1&&R.f<180)R.fastHead=1;
+ if(R.bands>0){R.bands--;L.fix=R.f+90}
+ const e=pts[2*i+1];bonus(i==0?80:12,i==0?'TOTAL TEARDOWN!':'SNAP!','#f55');shake+=8;snap();
+ for(let k=0;k<14;k++)parts.push({x:e.x,y:e.y,vx:(Math.random()-.5)*8,vy:-Math.random()*6,l:35,c:'#fff',s:3});
+ spray(e.x,e.y,i==0?70:40,5);
+}
+function repair(i){
+ const fix1=k=>{const l=LM[k];l.broken=0;l.fix=0;l.hp=l.max*.5;l.lvl=1;l.bleed=0;const j=JT.find(q=>q.c==k);if(j){const A=pts[j.a],B=pts[j.b];A.x=B.x;A.y=B.y;A.px=B.px;A.py=B.py}};
+ if(i==0)LM.forEach((_,k)=>fix1(k));else fix1(i);R.banded=1;pop(pts[HIP].x,pts[HIP].y-50,'BAND-AID!','#9ff',18);beep(900,.1)}
+function hit(p,imp,tread,onFloor){
+ if(imp<3.5||p.cd>0||CD.done||CD.rest>10)return;
+ if(onFloor&&imp<7)return;
+ if(CD.bs<3&&imp<7)return; // sliding or idling never scores
+ p.cd=6;
+ dmgLimb(p.l,Math.min(imp,14)*K.dm*(p.head?1.6:1));
+ if(imp>3)spray(p.x,p.y,Math.min(10,1+imp*.5|0),3);
+ if(R.f-CD.gf<K.gate)return;CD.gf=R.f;
+ const wnd=win()+CD.xw+CD.ign;let cont=false;
+ if(!CD.hf){CD.hf=1;if(ST.startCombo){CD.cb=ST.startCombo+1;cont=true}else CD.cb=1}
+ else if(R.f-CD.last<=wnd){CD.cb++;cont=true}
+ else if(CD.cb>1&&Math.random()<ST.comboKeep){CD.cb++;cont=true}
+ else{CD.cb=1;if(ST.ignite&&imp>=12){CD.ign=ST.ignite*60;R.ign=1;pop(p.x,p.y-30,'IGNITION!','#ffa24a',16)}}
+ if(cont){CD.xw=ST.comboExt*60;CD.ign=0}else CD.xw=0;
+ CD.last=R.f;R.hits++;S.st.hits++;R.maxC=Math.max(R.maxC,CD.cb);R.gh[LG[p.l]]=1;
+ let dt=1;if(ST.dtap>0&&p.l==CD.ll&&R.f-CD.llf>=9){dt=2+.25*(ST.dtap-1);R.dt=1;pop(p.x,p.y-30,'DOUBLE TAP!','#8cf',16)}
+ CD.ll=p.l;CD.llf=R.f;
+ let m=ST.dmg+(R.rush>R.f?.5:0)+(R.pack?.25:0)+R.burst;R.burst=0;if(Math.abs(CD.av)>.12)m+=ST.wreck;
+ let dmg=imp*K.base*(1+Math.min(5,m))*(p.head?2:1)*(1+Math.min(20,CD.cb-1)*.06)*(1+Math.min(30,R.flips)*.05)*(1+ST.speed*Math.min(imp,20)/10)*dt;
+ if(R.hits==1&&ST.glass){dmg*=1+1.5*ST.glass;R.glassHit=1;pop(p.x,p.y-40,'GLASS BONES!','#bff',16)}
+ const crit=R.nextCrit||Math.random()<ST.crit;R.nextCrit=0;
+ if(crit){dmg*=3+ST.critPow;R.crits++;S.st.crits++}
+ if((imp>14||crit)&&R.f-lastFreeze>30){lastFreeze=R.f;freeze=crit?4:3;punch=Math.max(punch,Math.min(1,imp/22))}if(crit)flashA=.3;
+ let g=dmg*cashM();if(p.head)g*=1+ST.nodive;if(crit)g*=1+ST.papa;if(R.perf&&ST.pstreak)g*=1+ST.pstreak*R.ps;
+ R.dmg+=dmg;R.cash+=g;R.hitCash+=g;S.cash+=g;S.earned+=g;S.total+=g;R.best=Math.max(R.best,dmg);R.bestCash=Math.max(R.bestCash,g);
+ if(p.head){R.heads++;S.st.heads++}R.flash=8;
+ const big=imp>8;
+ pop(p.x,p.y-12,(crit?'CRIT! ':big?['BONK!','THWACK!','OOF!','CRUNCH!','BOING!'][Math.random()*5|0]+' ':'')+'+'+fmt(g)+(CD.cb>1?' x'+CD.cb:''),crit?'#ff4dff':`hsl(${Math.max(0,50-CD.cb*6)},95%,${big?60:50}%)`,big||crit?24:15);
+ shake=Math.min(14,shake+imp*.5);thud(imp);beep(300+Math.min(CD.cb,30)*30,.05,.02);
+ if(tread&&imp>5)for(let k=0;k<4;k++)parts.push({x:p.x,y:p.y+p.r,vx:(Math.random()-.5)*3,vy:-Math.random()*1.5,l:28,L:28,a:1,g:.02,c:'#efe4cf',s:4+Math.random()*5});
+ for(let k=0;k<(big?10:4);k++)parts.push({x:p.x,y:p.y,vx:(Math.random()-.5)*6,vy:-Math.random()*5,l:30,c:`hsl(${Math.random()*60},95%,60%)`,s:3});
+}
+function probe(x,y,r){
+ const k=Math.floor((x-X0)/SW)+1,lo=Math.min(n,Math.max(0,k-2)),hi=Math.min(n+1,Math.max(0,k+2));let best=null;
+ for(let j=lo;j<=hi;j++){const q=rects[j];if(q.t>1e8)continue;
+  if(x+r>q.l&&x-r<q.r&&y+r>q.t){const pu=y+r-q.t;let nx=0,ny=-1,pen=pu;
+   if(pu<=SH+r+2){const pl=x+r-q.l,pr=q.r-(x-r);if(pl<pen){pen=pl;nx=-1;ny=0}if(pr<pen){pen=pr;nx=1;ny=0}}
+   if(!best||pen<best.pen)best={nx,ny,pen,j}}}
+ return best}
+function stepEvents(p,j,imp){
+ if(CR.has(j)&&!CD.cr[j]){CD.cr[j]=1;R.creaked=1;dmgLimb(p.l,16);pts.forEach(q=>{q.px-=3;q.py+=1});bonus(45,'THE STEP GAVE WAY!','#da8');shake+=6;snap();spray(p.x,p.y,10,4)}
+ const pu=PUN[j];if(pu&&!pu.done[CD.i]&&!pu.t){pu.t=1;pu.who=CD.i;pu.limb=p.l}
+}
+function collide(p){
+ const o=probe(p.x,p.y,p.r);if(!o)return;CD.touch=1;
+ const q=rects[o.j],vx=p.x-p.px,vy=p.y-p.py;p.x+=o.nx*o.pen;p.y+=o.ny*o.pen;const vn=vx*o.nx+vy*o.ny;
+ const stair=o.ny<0&&(o.j>0&&o.j<n||o.j==n+1);
+ if(stair&&ST.esc){const dp=ST.esc*.0105*.5*.6;p.px+=SW*dp;p.py+=SH*dp} // the belt carries whatever is standing on it
+ if(vn<0){const imp=-vn*2;let e=imp>1.2?K.e+ST.bounce:0;
+  if(stair&&TR.has(o.j)&&imp>1.2)e+=.6;
+  if(stair&&imp>3.5)stepEvents(p,o.j,imp);
+  const f=o.j==n?.965:o.ny<0?Math.min(.9995,CD.ice>0?.9993:K.ft):.995;
+  p.px=p.x-((vx-vn*o.nx)*f-e*vn*o.nx);p.py=p.y-((vy-vn*o.ny)*f-e*vn*o.ny);hit(p,imp,o.ny<0,o.j==n)}
+ else{p.px=p.x-vx;p.py=p.y-vy}
+ if(o.ny<0&&q.s>0)p.py+=q.s; // a step moving up pushes him with it
+}
+function midCollide(i){const a=pts[2*i],b=pts[2*i+1],o=probe((a.x+b.x)/2,(a.y+b.y)/2,3);if(!o)return;
+ a.x+=o.nx*o.pen;a.y+=o.ny*o.pen;b.x+=o.nx*o.pen;b.y+=o.ny*o.pen;a.px+=o.nx*o.pen*.5;a.py+=o.ny*o.pen*.5;b.px+=o.nx*o.pen*.5;b.py+=o.ny*o.pen*.5}
+function rot(q,o,a){const c=Math.cos(a),s=Math.sin(a),dx=q.x-o.x,dy=q.y-o.y;q.x=o.x+dx*c-dy*s;q.y=o.y+dx*s+dy*c}
+function relax(){
+ for(let it=0;it<5;it++){
+  LM.forEach((L,i)=>{const a=pts[2*i],b=pts[2*i+1],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-L.len)/d*.5;a.x+=dx*f;a.y+=dy*f;b.x-=dx*f;b.y-=dy*f});
+  for(const j of JT){if(LM[j.c].broken)continue;const A=pts[j.a],B=pts[j.b],mx=(A.x+B.x)/2,my=(A.y+B.y)/2;A.x=B.x=mx;A.y=B.y=my}
+  for(const j of JT){if(LM[j.c].broken)continue;
+   const rel=wrap(ang(j.c)-ang(j.p)-j.rest);let d=0;if(rel>j.hi)d=rel-j.hi;else if(rel<j.lo)d=rel-j.lo;if(!d)continue;d=Math.max(-.2,Math.min(.2,d));
+   const q=pts[2*j.c+1],ox=q.x,oy=q.y;rot(q,pts[2*j.c],-d*.5);q.px+=q.x-ox;q.py+=q.y-oy}
+  pts.forEach(collide);for(let i=0;i<10;i++)midCollide(i);
+ }
+}
+function sub(){
+ const g=G*(1-ST.air+ST.grav),fl=X0+n*SW; // the downhill pull only exists over the stairs
+ for(const p of pts){const vx=(p.x-p.px)*.999;let vy=(p.y-p.py)*.999;if(vy<-7)vy=-7; // nobody flies off into the sky
+  p.px=p.x;p.py=p.y;p.x+=vx+(p.x<fl&&p.x>X0-40?K.gx:0);p.y+=vy+g}
+ relax();
+}
+function clearance(){ // distance from his lowest point to the stair surface right below him
+ let low=-1e9;for(const p of pts)low=Math.max(low,p.y+p.r);
+ const x=pts[HIP].x,k=Math.floor((x-X0)/SW)+1;let best=1e9;
+ for(let j=Math.min(n,Math.max(0,k-2));j<=Math.min(n+1,k+2);j++){const q=rects[j];if(q.t>1e8)continue;if(x>=q.l&&x<=q.r&&q.t>=low-3&&q.t<best)best=q.t}
+ return best>1e8?0:Math.max(0,best-low)}
+// ---- spacebar abilities
+function useAbility(id,forced){
+ if(R.boost<=0)return;R.boost--;R.bu++;S.st.boosts++;R.lastBoost=R.f;R.used[id]=1;
+ for(const d of D){if(d.done)continue;cur(d);const h=pts[HIP];
+  if(id=='boost'){pts.forEach(p=>{const dx=p.x-h.x,dy=p.y-h.y;p.px-=-dy*.05+2.4;p.py-=dx*.05-4.6});pop(h.x,h.y-40,'BOOST!','#fff',22);for(let k=0;k<16;k++)parts.push({x:h.x,y:h.y+10,vx:(Math.random()-.5)*3-2,vy:Math.random()*4,l:25,c:`hsl(${20+Math.random()*30},100%,60%)`,s:4})}
+  else if(id=='flip'||id=='back'){const dir=id=='flip'?1:-1;d.spn={dir,fr:22};pts.forEach(p=>{const dx=p.x-h.x,dy=p.y-h.y;p.px+=dy*.12*dir;p.py-=dx*.12*dir;p.py+=2.5});pop(h.x,h.y-40,id=='flip'?'FRONTFLIP!':'BACKFLIP!','#9ef',20)}
+  else if(id=='slam'){pts.forEach(p=>{p.py-=9});pop(h.x,h.y-40,'GROUND POUND!','#fa6',20);shake+=5}
+  else if(id=='brake'){pts.forEach(p=>{p.px=p.x-(p.x-p.px)*.2;p.py=p.y-(p.y-p.py)*.2});pop(h.x,h.y-40,'BRAKE!','#f66',20)}
+  else if(id=='rush'){R.rush=R.f+120;LM.forEach(l=>{if(!l.broken)l.hp=Math.min(l.max,l.hp+l.max*.25)});pop(h.x,h.y-40,'ADRENALINE RUSH!','#ffd23f',20);flashA=.25}}
+ whoosh();shake+=3;cur(D[0]);
+}
+function fx(t,z){
+ if(t=='dyn'){const RD=120;pts.forEach(p=>{const dx=p.x-z.x,dy=p.y-z.y,d=Math.hypot(dx,dy)||1;if(d<RD){const f=(1-d/RD)*7;p.px-=dx/d*f;p.py-=dy/d*f;if(d<RD*.7)dmgLimb(p.l,28*(1-d/RD)+6)}});
+  for(let q=0;q<30;q++)parts.push({x:z.x,y:z.y,vx:(Math.random()-.5)*12,vy:(Math.random()-.5)*12,l:30,c:`hsl(${Math.random()*50},100%,55%)`,s:5});shake+=14;boom();flashA=.5;bonus(90,'BOOM!','#f80')}
+ else if(t=='rocket'){pts.forEach(p=>{p.px-=4;p.py+=5});bonus(80,'ROCKET!','#f60')}
+ else if(t=='cannon'){pts.forEach(p=>{p.px-=7;p.py+=4});shake+=10;boom();flashA=.4;bonus(100,'KABLAM!','#fa0')}
+}
+function hazards(){
+ for(const z of haz){if(z.h[CD.i]||CD.done)continue;if(!pts.some(p=>Math.hypot(p.x-z.x,p.y-z.y)<24+p.r))continue;z.h[CD.i]=1;z.hit=D.every(d=>z.h[d.i])?1:0;R.hz++;
+  R.types[z.t]=1;R.lastHaz=R.f;fx(z.t,z);beep(700,.1);
+  for(let q=0;q<6;q++)parts.push({x:z.x,y:z.y,vx:(Math.random()-.5)*5,vy:-Math.random()*4,l:26,L:26,a:1,g:.1,c:'#fff7b0',s:3+Math.random()*3})}
+}
+// ================= MESSAGES =================
+const TM=[['That was more of a stumble.','Gravity barely clocked in.','Did he even fall? Technically.','The stairs are unimpressed.','A gentle tumble. A polite thud.','Somewhere, a toddler fell harder.','Warm-up lap complete.','Tripped over his own ambition.'],
+['Ow. Probably.','He felt that one.','A respectable bonk.','The stairs got some exercise.','Clean tumble, decent thud.','Mild concern in the audience.','He will walk it off. Eventually.','Bruises: acquired.'],
+["OOOOH, THAT'S GONNA LEAVE A MARK!",'ABSOLUTELY CHAOTIC!','Now THAT was a descent.','Crowd goes mild-to-medium wild!','He took every step personally.','Bone-rattling. Floor-shaking. Delightful.','The stairs hit back!','A tumble for the highlight reel.'],
+['The audience gasps!','Structural damage to the staircase!','Physical therapy will be needed. Lots.','A masterpiece in blunt trauma.','He went the whole way down. And then some.','Gravity, take a bow.','The stairs will need therapy too.','Somebody call someone. Anyone.'],
+['MEDICAL STUDENTS FASCINATED!','THE LAWYERS ARE ON THE PHONE!','That should not be physically possible!','Insurance has left the chat.','A seismograph somewhere just twitched.','Scientists request a rematch for research.','Forensics is calling it "creative".','Hall of Fame descent!'],
+['THE STAIRS HAVE FILED FOR BANKRUPTCY!','Physics is taking notes, and crying.','The dummy has transcended dummy-hood.','LEGENDARY. TERRIFYING. PROFITABLE.','Newton is spinning in his grave. Fast.','They will tell tales of this fall.','The staircase is now a historical site.','That was art. Violent, money-printing art.']];
+const EP=['Retired early.','He had it coming. Down.','Took the stairs. Sort of.','Left on a high note.','Gravity: 1, Guy: 0.',"Should've taken the elevator.",'Just visiting. Briefly.','Rest in pieces.','Fell for it.','A step too far.','Descended with grace. Mostly.','He gave it his all. And his arms.','Beloved by gravity.','Still holding a grudge against stairs.','Was not wearing a helmet.','Died doing what he loved: falling.','He never saw it coming. Or the stairs.','Down, but not out. Okay, down and out.','No refunds.','Went out with a bang. Several, actually.','Always one step ahead. Then none.','His last words: "Wait, what?"','The handrail was right there.','Left a lasting impression. On the floor.','Flopped magnificently.','Hit rock bottom. Then the floor.','Falling was his calling.','Not all heroes wear capes. Some wear bruises.','Tumbled into legend.','He was fine. He was fine. He was not fine.','Terms and conditions: stairs.','He wanted to see the bottom.','The floor says thanks.','Top of his game. Bottom of the stairs.','Gone, but not forgotten. Mostly gone.','Will be reassembled shortly.','Took it all in stride. Stairs too.','Clumsy to the very end.','Made a real impression.','Fear of heights? Cured.'];
+function deathMsg(){
+ const sp=[];
+ if(R.fastHead)sp.push('Head first, as foretold.','He lost his head over this.','Heads up! ...too late.');
+ if(R.tear)sp.push('Fell apart under pressure.','Some assembly required.','Did someone order a dummy kit?');
+ if(!R.lost&&R.dmg>1e3)sp.push('Not a scratch. Suspicious.','Built different. Still fell down stairs though.');
+ if(R.legless)sp.push('Legs: optional, apparently.','He is not standing for this.');
+ if(R.armless)sp.push('Armless but not harmless.','Waves goodbye with nothing.');
+ if(R.perf)sp.push('A perfect shove. Poetry in motion.');
+ if(R.bu>=3)sp.push('Airline miles earned: several.','He flew. Briefly. Gracefully? No.');
+ if(R.time<3)sp.push('Quick and efficient. Like a bad decision.');
+ if(R.time>30)sp.push('That was a long way down. Eventually.');
+ if(R.flips>=10)sp.push('Gymnastics judges give it a 9.7.');
+ if(R.hz>=5)sp.push('A hazard buffet. He sampled everything.');
+ if(R.crits>=3)sp.push('Lucky bounces everywhere!');
+ if(R.dn>=3)sp.push('A whole crowd of dummies. Chaos achieved.','Many dummies, many bruises.','Synchronized tumbling, sort of.');
+ if(R.maxC>=15)sp.push('Combo so long it needs its own zip code.');
+ if(sp.length&&Math.random()<.55)return rnd(sp);
+ const t=R.dmg<200?0:R.dmg<2e3?1:R.dmg<2e4?2:R.dmg<2e5?3:R.dmg<2e6?4:5;return rnd(TM[t]);
+}
+function endRun(){
+ mode='result';resultT=0;S.runs++;R.time=R.f/60;let mxl=0,sum=0,dist=0;R.armless=0;R.legless=0;R.fin=0;const fl=X0+n*SW;
+ for(const d of D){const k=d.LM.filter(l=>l.broken).length;mxl=Math.max(mxl,k);sum+=k;if(d.LM[2].broken&&d.LM[4].broken)R.armless=1;if(d.LM[6].broken&&d.LM[8].broken)R.legless=1;if(d.fin)R.fin++;dist=Math.max(dist,d.pts[HIP].x-fl)}
+ R.lost=mxl;cur(D[0]);
+ const rec=R.dmg>S.best;if(rec)S.best=R.dmg;
+ let pct=(rec?ST.rec:0)+ST.limbPay*R.lost;
+ let ex=R.cash*pct;
+ R.ljPct=0;if(ST.lj){for(const [dd,p] of LJ)if(dist>=dd)R.ljPct=p;ex+=R.cash*R.ljPct}
+ R.hjPct=0;if(ST.hj){R.hjPct=Math.min(.2*ST.hj,R.jump*.0015*ST.hj);ex+=R.cash*R.hjPct}
+ R.replayed=0;if(ST.finale&&R.bestCash>0){ex+=R.bestCash*ST.finale;R.replayed=1}
+ if(R.bull)ex+=R.cash*.5;
+ R.extra=ex;S.cash+=ex;S.earned+=ex;S.total+=ex;R.cash+=ex;
+ R.hrLoss=0;R.jp=0;
+ if(ST.hr){const loss=R.cash*Math.max(.03,.15-.03*(ST.hr-1));R.hrLoss=loss;S.cash-=loss;S.earned-=loss;
+  if(Math.random()<.02){const w=R.cash*12;S.cash+=w;S.earned+=w;S.total+=w;R.jp=1;R.jpWin=w;toast('🎰 JACKPOT! +$'+fmt(w))}}
+ S.st.bestJump=Math.max(S.st.bestJump||0,R.jump);
+ S.st.limbs+=sum;S.st.flips+=R.flips;S.st.dmg+=R.dmg;S.st.skinRuns[S.skin]=(S.st.skinRuns[S.skin]||0)+1;chk();calc(false);
+ for(let k=0;k<60;k++)parts.push({x:pts[HIP].x,y:pts[HIP].y,vx:(Math.random()-.5)*10,vy:-Math.random()*9,l:80,c:`hsl(${Math.random()*360},90%,60%)`,s:4});
+ const row=(a,b)=>`<span>${a}</span><span>${b}</span>`;
+ $('box').innerHTML=`<h2>${rec?'🏆 NEW RECORD! ':''}${deathMsg()}</h2><div class="g">${row('Damage',fmt(R.dmg))}${row('Cash earned','$'+fmt(R.cash))}${row('End bonuses','$'+fmt(R.extra))}${R.bull?row('Bullseye','x1.5 cash'):''}${R.ljPct?row('Long jump','+'+Math.round(R.ljPct*100)+'%'):''}${ST.hj?row('High jump',Math.round(R.jump)+' (+'+Math.round(R.hjPct*100)+'%)'):''}${R.replayed?row('Instant Replay','+$'+fmt(R.bestCash*ST.finale)):''}${ST.hr?(R.jp?row('High Roller','JACKPOT +$'+fmt(R.jpWin)):row('High Roller','-$'+fmt(R.hrLoss))):''}${row('Best hit',fmt(R.best))}${row('Flips',R.flips)}${row('Max combo','x'+R.maxC)}${row('Props hit',R.hz)}${row('Limbs lost',R.lost)}${row('Steps',R.step+'/'+n)}${D.length>1?row('Dummies',D.length):''}${row('Time',R.time.toFixed(1)+'s')}</div><div style="color:var(--mut);margin-bottom:10px">🪦 "${rnd(EP)}"</div><button class="big" id="again">AGAIN! (Space)</button>`;
+ $('res').style.display='flex';$('again').onclick=again;dirty=1;save();
+}
+function again(){$('res').style.display='none';stains=[];parts=[];calc(false);newZone();build();mode='ready';readyT=0;meter.v=0;pops=[];dirty=1}
+function start(){started=true;$('title').style.display='none';try{ac()}catch(e){}}
+function act(){if(!started){start();return}if(mode=='ready')shove();else if(mode=='run')useAbility(S.eq);else if(mode=='result')again()}
+// ================= UPDATE =================
+function step(){
+ if(CHEAT_INFINITE_MONEY){S.cash=Math.max(S.cash,1e15);S.earned=Math.max(S.earned,1e15)}
+ if(ST.esc){escPhase+=ST.esc*.0105;if(escPhase>=1){escPhase-=1;escWrap()}layout(true)}else if(escPhase){escPhase=0;layout(true)}else layout(false);
+ if(mode=='ready'){readyT++;meter.v+=meter.d*.022*(1-ST.slow);if(meter.v>=1){meter.v=1;meter.d=-1}if(meter.v<=0){meter.v=0;meter.d=1}cam.x+=(X0+160-cam.x)*.08;cam.y+=(Y0+100-cam.y)*.08;cam.zm+=(1-cam.zm)*.08;
+  if(ST.autop>0&&S.autoOn&&started&&readyT>70){ // the Autopusher: never a bullseye, that is yours to earn
+   if(Math.random()<.2+.15*(ST.autop-1))meter.v=ZC+(Math.random()<.5?-1:1)*(BULL+.01+Math.random()*(mw()/2-BULL-.02));else{let v=.1+Math.random()*.8;if(Math.abs(v-ZC)<mw()/2+.03)v=ZC>.5?.12:.88;meter.v=v}
+   shove()}}
+ if(mode=='result'&&ST.autop>0&&S.autoOn&&++resultT>150)again();
+ if(mode=='run'&&freeze>0)freeze--;
+ else if(mode=='run'){
+  R.f++;let alive=0,cx=0,cy=0,vsx=0,vsy=0,mxs=R.step,stall=false;
+  for(const j in PUN){const pu=PUN[j];
+   if(pu.t>0){pu.t++;const old=pu.off;
+    if(pu.t>=3&&pu.t<=7)pu.off=Math.min(90,pu.off+18);else if(pu.t>22)pu.off=Math.max(0,pu.off-3.5); // the step slams up in 5 frames, holds, then sinks back
+    pu.s=pu.off>old?(pu.off-old)/2*1.5:0;
+    if(pu.t==4){const d=D[pu.who];cur(d);const rc=rects[j];if(Math.hypot(pts[HIP].x-(rc.l+rc.r)/2,pts[HIP].y-rc.t)<170){pts.forEach(p=>{p.px-=5;p.py+=3});dmgLimb(pu.limb,22);bonus(60,'STAIR PUNCH!','#ff8a5a');R.punched=1;spray(pts[HIP].x,pts[HIP].y,14,5);shake+=14;flashA=.3;thud(16);boom()}pu.done[pu.who]=1}
+    if(pu.t>60){pu.t=0;pu.off=0;pu.s=0}}else pu.s=0}
+  for(const d of D){cur(d);
+   if(!d.done){
+    sub();sub();pts.forEach(p=>p.cd--);if(d.touch)d.af=0;d.air=d.touch?0:d.air+1;d.touch=0;if(d.ice>0)d.ice--;
+    const h=pts[HIP],hd=pts[HEAD],a=Math.atan2(hd.y-h.y,hd.x-h.x);
+    if(d.spn&&d.spn.fr>0){d.spn.fr--;const sp=d.spn.dir*.03;pts.forEach(p=>{p.px+=(p.y-h.y)*sp;p.py-=(p.x-h.x)*sp})} // flips keep spinning for a moment
+    d.bs=pts.reduce((s2,p)=>s2+Math.hypot(p.x-p.px,p.y-p.py),0)/pts.length*2;
+    if(d.pa!=null){const dd=wrap(a-d.pa);d.av=d.av*.9+dd*.1;
+     if(d.bs>2.5){d.ang+=dd;const fl=Math.floor(Math.abs(d.ang)/(2*Math.PI));
+      if(fl>d.fl){d.fl=fl;R.flips++;d.af++;R.airflips=Math.max(R.airflips,d.af);pop(h.x,h.y-45,'FLIP!','#6cf',16);
+       if(ST.ball)bonus(6,'BALLERINA','#f9c',ST.ball);if(ST.gym&&d.af>=2)bonus(8,d.af+'x FLIP CHAIN','#6cf',ST.gym*1.8**(d.af-2))}}}d.pa=a;
+    if(ST.top&&Math.abs(d.av)>.08){const k=Math.sign(d.av)*.0002*ST.top;pts.forEach(p=>{p.px+=(p.y-h.y)*k;p.py-=(p.x-h.x)*k})}
+    if(d.air>=3){const jh=clearance()/2;if(jh>R.jump)R.jump=jh}
+    hazards();
+    LM.forEach((L,i)=>{if(L.bleed>0){L.bleed--;if(L.bleed%3==0){const j=JT.find(q=>q.c==i),q=j?pts[j.b]:pts[HIP];spray(q.x,q.y,2,1.5)}}if(L.fix&&R.f>=L.fix)repair(i)});
+    d.rest=(R.f>60&&d.bs<1.2&&d.air<8)?d.rest+1:0; // frames with no momentum; any movement resets it
+    if(R.mines>0&&d.rest>30){R.mines--;R.mined=1;pts.forEach(p=>{p.px-=2;p.py+=8});LM.forEach((L,i)=>dmgLimb(i,30));bonus(150,'LANDMINE!','#f80');shake+=14;boom();flashA=.5;
+     for(let q=0;q<30;q++)parts.push({x:h.x,y:h.y+20,vx:(Math.random()-.5)*12,vy:-Math.random()*10,l:30,c:`hsl(${Math.random()*50},100%,55%)`,s:5});d.rest=0}
+    if(d.bs<1.6&&d.air<8)pts.forEach(p=>{p.px=p.x-(p.x-p.px)*.8;p.py=p.y-(p.y-p.py)*.8}); // settle: kill idle jitter
+    const fl2=X0+n*SW;
+    if(h.x>d.pg+20){d.pg=h.x;d.pgf=R.f}
+    if(h.x<X0-4&&d.bs<1.5&&R.f>40&&!d.nudged){d.nudged=1;R.stumbled=1;pts.forEach(p=>{p.px-=3;p.py+=1.5});pop(h.x,h.y-50,'TIPS OVER THE EDGE...','#fff',16)}
+    else if(h.x<fl2-SW&&R.f-d.pgf>110&&d.bs<3&&d.air<8&&d.kicks<4){d.kicks++;R.wiggled=1;d.pgf=R.f;pts.forEach(p=>{p.px-=3;p.py+=3.5});pop(h.x,h.y-50,'WIGGLE WIGGLE!','#fff',16)}
+    // a dummy only counts as finished after ~1 second with no momentum
+    if(d.rest>60||(d.kicks>=4&&R.f-d.pgf>60&&d.air<8&&d.bs<3)||(h.x>fl2+4500&&(d.air<8||h.x>fl2+7000))||h.y>Y0+n*SH+600){d.done=1;d.why='done';d.fin=h.x>X0+(n-1)*SW?1:0}
+    mxs=Math.max(mxs,Math.min(n,Math.max(0,Math.floor((h.x-X0)/SW)+1)));
+    if(!d.done){alive++;if(d.bs<2.2&&d.air<8)stall=true}
+   }
+   cx+=pts[HIP].x;cy+=pts[HIP].y;vsx+=(pts[HIP].x-pts[HIP].px)*2;vsy+=(pts[HIP].y-pts[HIP].py)*2}
+  while(R.step<mxs){R.step++;S.st.steps++}
+  if(ST.auto>0&&R.auto<ST.auto&&R.boost>0&&R.f>90&&stall){R.auto++;pop(pts[HIP].x,pts[HIP].y-70,'AUTOPILOT!','#8ff',20);useAbility('boost',true)}
+  const nd=D.length,ax=cx/nd,col=Math.min(n,Math.max(0,Math.floor((ax-X0)/SW)+1)),gy=rects[col].t,vx=vsx/nd,vy=vsy/nd;
+  const tx=ax+90,ty=Math.max(cy/nd,gy-90); // same follow target as before...
+  cam.x+=(tx-cam.x)*Math.min(.85,.1+Math.abs(tx-cam.x)/250);cam.y+=(ty-cam.y)*Math.min(.85,.1+Math.abs(ty-cam.y)/200); // ...but it chases harder and faster the farther he gets from the centre
+  cam.zm+=(1-cam.zm)*.1;
+  if(alive==0||R.f>30000)endRun();
+ }
+ shake*=.88;punch*=.85;flashA*=.85;for(const p of pops){p.y-=.6;p.l--}pops=pops.filter(p=>p.l>0);
+ for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=(p.g??.25);p.l--;if(p.b&&probe(p.x,p.y,.5)){p.l=0;if(stains.length>900)stains.shift();stains.push({x:p.x,y:p.y,s:p.s*(1+Math.random()),c:p.c})}}
+ parts=parts.filter(p=>p.l>0);
+}
+// ================= DRAW =================
+const rrect=(x,y,w,h,r)=>{ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):ctx.rect(x,y,w,h)};
+function cloud(x,y,s){ctx.beginPath();ctx.arc(x,y,16*s,0,7);ctx.arc(x+18*s,y-6*s,20*s,0,7);ctx.arc(x+40*s,y,15*s,0,7);ctx.arc(x+20*s,y+6*s,16*s,0,7);ctx.fill()}
+function hills(off,base,col,amp,fq,ph){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(0,H);for(let x=0;x<=W+20;x+=20)ctx.lineTo(x,base-amp*(.55+.45*Math.sin((x+off)*fq+ph))-amp*.25*Math.sin((x+off)*fq*2.3));ctx.lineTo(W,H);ctx.fill()}
+function tree(x,y,s){ctx.fillStyle='#6b4a2b';ctx.fillRect(x-3*s,y-14*s,6*s,16*s);ctx.fillStyle='#3f9a4a';ctx.beginPath();ctx.arc(x,y-24*s,14*s,0,7);ctx.arc(x-9*s,y-16*s,10*s,0,7);ctx.arc(x+9*s,y-16*s,10*s,0,7);ctx.fill()}
+function backdrop(t){
+ const oy=-cam.y*.04,gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#4fa9ff');gr.addColorStop(.55,'#b9e2ff');gr.addColorStop(1,'#eaf8ff');ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
+ ctx.fillStyle='rgba(255,244,170,.25)';ctx.beginPath();ctx.arc(W*.82,H*.2+oy,58,0,7);ctx.fill();ctx.fillStyle='#fff3b0';ctx.beginPath();ctx.arc(W*.82,H*.2+oy,36,0,7);ctx.fill();
+ ctx.fillStyle='rgba(255,255,255,.85)';const cw=W+400;for(let i=0;i<7;i++){const x=(((i*260-cam.x*.08+t*8)%cw)+cw)%cw-200;cloud(x,H*.1+((i*47)%80)+oy,.7+(i%3)*.25)}
+ hills(cam.x*.1,H*.66+oy,'#a8dba5',70,.006,1);hills(cam.x*.22,H*.74+oy,'#7cc47f',55,.009,3);
+ for(let i=0;i<8;i++){const x=(((i*190-cam.x*.3)%(W+240))+W+240)%(W+240)-120;tree(x,H*.76+oy+((i*31)%18),1+(i%3)*.25)}
+ hills(cam.x*.4,H*.9+oy,'#5aa84a',40,.012,5);
+}
+function drawHaz(h,t){
+ const x=h.x,y=h.y+16,c=ctx;c.save();c.translate(x,y);c.globalAlpha=h.hit?.4:1;
+ c.fillStyle='rgba(0,0,0,.2)';c.beginPath();c.ellipse(0,0,24,4,0,0,7);c.fill();c.lineJoin='round';
+ const fs=(f,s)=>{if(f){c.fillStyle=f;c.fill()}if(s){c.strokeStyle=s;c.lineWidth=1.6;c.stroke()}};
+ switch(h.t){
+ case'banana':c.rotate(Math.sin(t*3+x)*.05);
+  for(const d of[-1,1]){c.beginPath();c.moveTo(0,-3);c.quadraticCurveTo(d*12,-22,d*26,-8);c.quadraticCurveTo(d*14,-8,0,1);fs('#ffd83a','#a87b00');c.fillStyle='#6b4a1a';c.beginPath();c.ellipse(d*25,-8,3.2,2.4,0,0,7);c.fill()}
+  c.beginPath();c.moveTo(-4,-3);c.quadraticCurveTo(0,-26,4,-3);fs('#ffe45e','#a87b00');
+  c.beginPath();c.ellipse(0,-6,10,5.5,0,0,7);fs('#fff6b0','#d9c46a');break;
+ case'skate':c.translate(0,-8);rrect(-24,-4,48,6,3);fs('#e8453c','#7a1210');c.fillStyle='#fff';c.fillRect(-6,-3,12,2);for(const d of[-14,14]){c.beginPath();c.arc(d,6,4,0,7);fs('#ffd23f','#7a5a00')}break;
+ case'dyn':c.translate(0,-2);for(let k=-1;k<=1;k++){rrect(k*9-4,-26,8,24,2);fs('#d8322a','#701410');c.fillStyle='#fff';c.fillRect(k*9-4,-16,8,3)}c.strokeStyle='#b9904f';c.lineWidth=2;c.beginPath();c.moveTo(0,-26);c.quadraticCurveTo(5,-34,10,-31);c.stroke();c.fillStyle=Math.random()<.5?'#ffb020':'#ff5a1f';c.beginPath();c.arc(10,-31,3+Math.random()*2,0,7);c.fill();break;
+ case'rocket':rrect(-24,-6,48,7,3);fs('#59606e','#2a2f3a');c.fillStyle='#ffd23f';for(let k=-1;k<=1;k++){c.beginPath();c.moveTo(k*14-5,-1);c.lineTo(k*14,-5);c.lineTo(k*14+5,-1);c.lineTo(k*14+5,-3);c.lineTo(k*14,-7);c.lineTo(k*14-5,-3);c.fill()}
+  c.fillStyle=Math.random()<.5?'#ff9020':'#ffd23f';c.beginPath();c.moveTo(-6,-8);c.lineTo(0,-18-Math.random()*8);c.lineTo(6,-8);c.fill();break;
+ case'cannon':c.beginPath();c.arc(-6,-6,8,0,7);fs('#6b4a2b','#2b1a0a');c.save();c.translate(-4,-14);c.rotate(-.55);rrect(-6,-8,30,16,6);fs('#40424b','#111');c.fillStyle='#22242b';c.fillRect(22,-9,4,18);c.restore();break;
+ case'coins':for(const q of[[-10,-4],[8,-5],[-2,-10],[0,-3],[14,-2]]){c.beginPath();c.ellipse(q[0],q[1],8,4,0,0,7);fs('#ffd23f','#a87b00')}c.fillStyle='#fff';c.globalAlpha=h.hit?.3:.8;c.fillRect(-4+Math.sin(t*5)*8,-16,2,2);break;
+ }
+ c.restore()}
+function drawDummy(){
+ const hip=pts[HIP],kk=Math.min(n,Math.max(0,Math.floor((hip.x-X0)/SW)+1)),gy=rects[kk].t,dd=gy-hip.y;
+ if(dd>0&&dd<300){ctx.fillStyle=`rgba(0,0,0,${.3*(1-dd/300)})`;ctx.beginPath();ctx.ellipse(hip.x,gy,28*(1-dd/420),5,0,0,7);ctx.fill()}
+ const SKI=S.skin,SKN_=SK[SKI]||SK[0];ctx.lineCap='round';ctx.textAlign='center';
+ for(const pass of[0,1,2])LM.forEach((L,i)=>{const A=pts[2*i],B=pts[2*i+1],bw=i==0?11:i==1?3:6;
+  ctx.strokeStyle=pass==0?SKN_[2]:pass==1?tint(SKN_[1],L.lvl):'rgba(255,255,255,.3)';ctx.lineWidth=pass==0?bw+3:pass==1?bw:bw*.3;
+  const o=pass==2?-bw*.2:0;ctx.beginPath();ctx.moveTo(A.x+o,A.y+o);ctx.lineTo(B.x+o,B.y+o);ctx.stroke()});
+ for(const j of JT){if(LM[j.c].broken)continue;const q=pts[j.b];ctx.fillStyle=tint(SKN_[1],LM[j.c].lvl);ctx.strokeStyle=SKN_[2];ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(q.x,q.y,3.4,0,7);ctx.fill();ctx.stroke()}
+ {const A=pts[0],B=pts[1],mx=(A.x+B.x)/2,my=(A.y+B.y)/2;ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(mx,my,3.4,0,7);ctx.stroke();ctx.beginPath();ctx.arc(mx,my,1,0,7);ctx.stroke()}
+ const hd=pts[HEAD],hg=ctx.createRadialGradient(hd.x-3,hd.y-4,1,hd.x,hd.y,12);hg.addColorStop(0,'rgba(255,255,255,.65)');hg.addColorStop(.35,tint(SKN_[1],LM[1].lvl));hg.addColorStop(1,tint(SKN_[1],Math.min(3,LM[1].lvl+.6)));
+ ctx.fillStyle=hg;ctx.strokeStyle=SKN_[2];ctx.lineWidth=3;ctx.beginPath();ctx.arc(hd.x,hd.y,10,0,7);ctx.fill();ctx.stroke();
+ ctx.save();ctx.translate(hd.x,hd.y);ctx.rotate(ang(1)+Math.PI/2);ctx.fillStyle=SKN_[2];ctx.font='bold 10px sans-serif';ctx.fillText(R&&R.flash?'x x':'• •',0,2);hat(SKI);ctx.restore();
+}
+function draw(){
+ if(cv.clientWidth!=W||cv.clientHeight!=H)resize();
+ const t=performance.now()/1000;
+ ctx.setTransform(DPR,0,0,DPR,0,0);backdrop(t);
+ const z=Math.max(.45,Math.min(H/430,W/700))*(1+punch*.035)*cam.zm;
+ ctx.save();ctx.translate(W/2+(Math.random()-.5)*shake,H/2+(Math.random()-.5)*shake);ctx.scale(z,z);ctx.translate(-cam.x,-cam.y);
+ const vx0=cam.x-W/2/z-80,vx1=cam.x+W/2/z+80;
+ if(vx0<X0){ // the house
+  ctx.fillStyle='#ecdfc6';ctx.fillRect(X0-460,Y0-230,460,230);ctx.fillStyle='#b98c5c';ctx.fillRect(X0-476,Y0-244,490,16);ctx.fillStyle='rgba(0,0,0,.08)';for(let x=X0-460;x<X0;x+=24)ctx.fillRect(x,Y0-228,2,228);
+  ctx.fillStyle='#7a4a2a';rrect(X0-130,Y0-128,70,128,6);ctx.fill();ctx.fillStyle='#5e3820';ctx.fillRect(X0-120,Y0-116,22,40);ctx.fillRect(X0-92,Y0-116,22,40);ctx.fillStyle='#ffd23f';ctx.beginPath();ctx.arc(X0-72,Y0-60,3.5,0,7);ctx.fill();
+  ctx.fillStyle='#8a5a34';ctx.fillRect(X0-140,Y0-136,90,8);
+  ctx.fillStyle='#bfe3ff';ctx.fillRect(X0-320,Y0-160,80,76);ctx.strokeStyle='#8a5a34';ctx.lineWidth=5;ctx.strokeRect(X0-320,Y0-160,80,76);ctx.beginPath();ctx.moveTo(X0-280,Y0-160);ctx.lineTo(X0-280,Y0-84);ctx.moveTo(X0-320,Y0-122);ctx.lineTo(X0-240,Y0-122);ctx.stroke();
+ }
+ const drawStairs=()=>{const drawRect=(r,j)=>{const l=Math.max(r.l,vx0),rr2=Math.min(r.r,vx1);if(rr2<=l||r.t>1e8)return;const w=rr2-l,T=r.base,lift=T-r.t;
+  if(j==0){ctx.fillStyle='#8f6a44';ctx.fillRect(l,r.t,w,1500);ctx.fillStyle='#c89464';ctx.fillRect(l,r.t,w,8);ctx.fillStyle='rgba(0,0,0,.18)';for(let x=Math.ceil(l/36)*36;x<rr2;x+=36)ctx.fillRect(x,r.t,2,8);return}
+  if(j==n){ctx.fillStyle='#6b4f35';ctx.fillRect(l,r.t,w,1500);ctx.fillStyle='#5db84a';ctx.fillRect(l,r.t,w,10);ctx.fillStyle='#86d96b';ctx.fillRect(l,r.t,w,3);ctx.fillStyle='#4aa23a';for(let x=Math.ceil(l/14)*14;x<rr2;x+=14){const hh=4+(x*7%5);ctx.fillRect(x,r.t-hh,2,hh+2)}
+   for(let x=Math.ceil(l/180)*180;x<rr2;x+=180){ctx.fillStyle='#ff6fa5';ctx.beginPath();ctx.arc(x+20,r.t-5,3.5,0,7);ctx.fill();ctx.fillStyle='#fff17a';ctx.beginPath();ctx.arc(x+20,r.t-5,1.4,0,7);ctx.fill()}return}
+  const col=j%2?'#b9ab93':'#c7baa2',cxm=(l+rr2)/2;
+  ctx.fillStyle=col;ctx.fillRect(l,T,w,1500);
+  if(PUN[j]){ctx.fillStyle='#1c1c22';ctx.fillRect(l+14,T+8,Math.max(0,w-28),SH-14);ctx.fillStyle='#ffd23f';for(let s2=0;s2<w-28;s2+=12)ctx.fillRect(l+14+s2,T+8,6,SH-14);ctx.strokeStyle='#e8453c';ctx.lineWidth=2;ctx.strokeRect(l+14,T+8,Math.max(0,w-28),SH-14)}
+  if(lift>.5){ctx.fillStyle='#8a8f9a';ctx.fillRect(cxm-9,r.t+30,18,lift+10);ctx.fillStyle='#ffd23f';for(let y=0;y<lift+10;y+=10)ctx.fillRect(cxm-9,r.t+32+y,18,5);
+   ctx.fillStyle=col;ctx.fillRect(l,r.t,w,38);ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=2;ctx.strokeRect(l,r.t,w,38);
+   const pu=PUN[j];if(pu&&pu.t>3){const ext=Math.min(1,(pu.t-3)/4)*(pu.t>26?Math.max(0,(36-pu.t)/10):1)*40;ctx.font='36px serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText('🥊',rr2-2+ext,r.t+26)}}
+  ctx.fillStyle='#e8dcc4';ctx.fillRect(l,r.t,w,7);ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(l,r.t+7,w,3);
+  ctx.fillStyle='#b3222c';ctx.fillRect(l+(l>r.l?0:8),r.t,w-(l>r.l?0:8)-(rr2<r.r?0:8),7);ctx.fillStyle='#e0a030';ctx.fillRect(l+(l>r.l?0:8),r.t,w-(l>r.l?0:8)-(rr2<r.r?0:8),1.5);
+  if(TR.has(j)){ctx.fillStyle='#39a0ff';ctx.fillRect(l+4,r.t-4,w-8,5);ctx.fillStyle='#bfe4ff';ctx.fillRect(l+4,r.t-4,w-8,1.5)}
+  if(CR.has(j)){ctx.fillStyle='#7a5430';ctx.fillRect(l,r.t,w,7);ctx.strokeStyle='#2a1808';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(l+10,r.t);ctx.lineTo(l+18,r.t+4);ctx.lineTo(l+14,r.t+7);ctx.moveTo(l+40,r.t);ctx.lineTo(l+34,r.t+5);ctx.lineTo(l+44,r.t+7);ctx.stroke()}
+  ctx.fillStyle='rgba(0,0,0,.22)';ctx.fillRect(r.l,r.t,2,SH+2);ctx.fillStyle='rgba(0,0,0,.06)';ctx.fillRect(l,T+SH*.5,w,2)};
+ rects.forEach((r,j)=>{if(j>0)drawRect(r,j)});drawRect(rects[0],0);};
+ const drawRail=()=>{{const k0=Math.max(0,Math.floor((vx0-X0)/SW)),k1=Math.min(n,Math.ceil((vx1-X0)/SW));ctx.lineCap='round';
+  const px=k=>X0+k*SW-(k?SW-14:14),py=k=>Y0+k*SH-64;
+  ctx.strokeStyle='#4a2f1a';ctx.lineWidth=6;ctx.beginPath();for(let k=k0;k<=k1;k++){k==k0?ctx.moveTo(px(k),py(k)):ctx.lineTo(px(k),py(k))}ctx.stroke();
+  ctx.lineWidth=3;ctx.beginPath();for(let k=k0;k<=k1;k++){ctx.moveTo(px(k),py(k));ctx.lineTo(px(k),Y0+k*SH)}ctx.stroke();
+  ctx.strokeStyle='#8a5a34';ctx.lineWidth=2;ctx.beginPath();for(let k=k0;k<k1;k++){for(let q=1;q<3;q++){const f=q/3,x=px(k)+(px(k+1)-px(k))*f,y=py(k)+(py(k+1)-py(k))*f;ctx.moveTo(x,y);ctx.lineTo(x,y+60)}}ctx.stroke()}};
+ if(ST.esc){drawRail();drawStairs()}else{drawStairs();drawRail()}
+ if(ST.lj){const gx=X0+n*SW,gyy=rects[n].t;LJ.forEach(([dd,p])=>{const x=gx+dd;if(x<vx0||x>vx1)return;ctx.fillStyle='#fff';ctx.fillRect(x-1,gyy-44,2,44);ctx.fillStyle=p>=.3?'#ffd23f':'#e8453c';ctx.beginPath();ctx.moveTo(x+1,gyy-44);ctx.lineTo(x+26,gyy-36);ctx.lineTo(x+1,gyy-28);ctx.fill();ctx.fillStyle='#fff';ctx.font='11px '+FNT;ctx.textAlign='center';ctx.fillText('+'+Math.round(p*100)+'%',x+12,gyy-10)})}
+ for(const s of stains){if(s.x<vx0||s.x>vx1)continue;ctx.fillStyle=s.c;ctx.fillRect(s.x-s.s,s.y-s.s*.4,s.s*2,s.s*.8)}
+ for(const h of haz)if(h.x>vx0&&h.x<vx1)drawHaz(h,t);
+ for(const d of D){cur(d);drawDummy()}
+ for(const p of parts){ctx.globalAlpha=p.a?Math.min(1,p.l/p.L*1.5):1;ctx.fillStyle=p.c;if(p.a){ctx.beginPath();ctx.arc(p.x,p.y,p.s*(1.6-p.l/p.L),0,7);ctx.fill()}else ctx.fillRect(p.x,p.y,p.s,p.s)}
+ ctx.globalAlpha=1;ctx.textAlign='center';
+ for(const p of pops){ctx.globalAlpha=Math.min(1,p.l/20);ctx.font=`${p.s}px ${FNT}`;ctx.lineWidth=5;ctx.lineJoin='round';ctx.strokeStyle='#1b1030';ctx.strokeText(p.t,p.x,p.y);ctx.fillStyle=p.c;ctx.fillText(p.t,p.x,p.y)}
+ ctx.globalAlpha=1;ctx.restore();
+ const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.45,W/2,H/2,Math.max(W,H)*.78);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(10,0,30,.32)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+ if(flashA>.01){ctx.fillStyle=`rgba(255,255,255,${flashA})`;ctx.fillRect(0,0,W,H)}
+ ctx.textAlign='center';ctx.lineJoin='round';
+ const txt=(s,x,y,sz,col='#fff')=>{ctx.font=`${sz}px ${FNT}`;ctx.lineWidth=Math.max(4,sz/6);ctx.strokeStyle='#1b1030';ctx.strokeText(s,x,y);ctx.fillStyle=col;ctx.fillText(s,x,y)};
+ if(mode=='ready'&&started){
+  const bw=Math.min(W-48,440),bx=(W-bw)/2,by=H-62,w=mw(),pulse=1+Math.sin(t*5)*.03;
+  rrect(bx-5,by-5,bw+10,34,12);ctx.fillStyle='rgba(20,10,40,.75)';ctx.fill();
+  rrect(bx,by,bw,24,8);ctx.fillStyle='#4a4468';ctx.fill();
+  ctx.save();rrect(bx,by,bw,24,8);ctx.clip();const g2=ctx.createLinearGradient(bx,0,bx+bw,0);g2.addColorStop(0,'#ff6b4a');g2.addColorStop(.6,'#ffd23f');g2.addColorStop(1,'#ff8a3a');ctx.globalAlpha=.55;ctx.fillStyle=g2;ctx.fillRect(bx,by,bw*meter.v,24);ctx.globalAlpha=1;
+  const zg=ctx.createLinearGradient(0,by,0,by+24);zg.addColorStop(0,'#7dffa0');zg.addColorStop(1,'#1fb85a');ctx.fillStyle=zg;ctx.fillRect(bx+bw*(ZC-w/2),by,bw*w,24);ctx.fillStyle='#e02020';ctx.fillRect(bx+bw*(ZC-BULL),by,bw*BULL*2,24);ctx.restore();
+  ctx.fillStyle='#fff';rrect(bx+bw*meter.v-3,by-8,6,40,3);ctx.fill();ctx.beginPath();ctx.moveTo(bx+bw*meter.v-8,by-12);ctx.lineTo(bx+bw*meter.v+8,by-12);ctx.lineTo(bx+bw*meter.v,by-2);ctx.fill();
+  ctx.save();ctx.translate(W/2,by-24);ctx.scale(pulse,pulse);txt(readyT>1500?'...be nice. Or wait. Gandhi?':'CLICK / SPACE to SHOVE!',0,0,22);ctx.restore();
+  if(S.runs<3)txt('Stop the marker in the GREEN for a PERFECT shove. The thin RED line pays x1.5 cash!',W/2,by+52,13,'#d9e6ff');
+ }
+ if(mode=='run'){
+  txt('💥 '+fmt(R.dmg),W/2,36,32,'#fff');
+  let bc=0,bf=0;for(const d of D)if(R.f-d.last<=win()&&d.cb>bc){bc=d.cb;bf=1-(R.f-d.last)/win()}
+  if(bc>1){const f=Math.max(0,bf);txt('x'+bc+' COMBO',W/2,66,22,'#ffd23f');rrect(W/2-60,74,120,7,3);ctx.fillStyle='rgba(0,0,0,.5)';ctx.fill();rrect(W/2-60,74,120*f,7,3);ctx.fillStyle='#ffd23f';ctx.fill()}
+  const ab=ABIL.find(x=>x[0]==S.eq)||ABIL[0];
+  rrect(10,H-44,190,32,16);ctx.fillStyle='rgba(20,10,40,.7)';ctx.fill();ctx.textAlign='left';ctx.font=`18px ${FNT}`;ctx.fillStyle=R.boost>0?'#fff':'#999';ctx.fillText(ab[2]+' '+ab[1].toUpperCase()+' ×'+R.boost,22,H-22);ctx.textAlign='center';
+  if(S.runs<3&&R.boost>0&&R.f<400)txt('TAP / SPACE: '+ab[1],W/2,H-60,16,'#d9e6ff');
+  if(ST.hj){rrect(206,H-44,190,32,16);ctx.fillStyle='rgba(20,10,40,.7)';ctx.fill();ctx.textAlign='left';ctx.font=`18px ${FNT}`;ctx.fillStyle='#9ee6ff';ctx.fillText('📏 JUMP '+Math.round(R.jump),218,H-22);ctx.textAlign='right';ctx.font=`12px ${FNT}`;ctx.fillStyle='#8fb4c8';ctx.fillText('best '+Math.round(Math.max(S.st.bestJump||0,R.jump)),384,H-22);ctx.textAlign='center'}
+  if(R.rush>R.f){txt('⚡ RUSH '+((R.rush-R.f)/60).toFixed(1)+'s',W/2,96,20,'#ffd23f');ctx.strokeStyle='rgba(255,210,60,.6)';ctx.lineWidth=6;ctx.strokeRect(3,3,W-6,H-6)}
+ }
+}
+// ================= UI =================
+let tab='up',sig='',confirmR=0,fr=0;
+const fameGain=()=>Math.floor(Math.sqrt(S.earned/5000));
+const shown=()=>ORDER.filter(q=>unlocked(q)&&!(S.hideMax&&maxed(q)));
+function mkSig(){return tab+S.hideMax+(tab=='up'?shown().map(q=>(cost(q)<=S.cash?1:0)+q.id+lv(q.id)).join(''):'')+(tab=='ab'?ABIL.map(a=>(S.abil[a[0]]?1:0)+(a[4]<=S.cash?1:0)).join('')+S.eq:'')+nAch()+fameGain()+confirmR+S.skin+(S.earned>=rebootNeed()?1:0)+S.pack}
+function render(){
+ const sc=$('panel').scrollTop;
+ let h=`<div class="tabs">${[['up','Upgrades'],['ab','Spacebar'],['ach','Awards '+nAch()+'/'+AC_.length],['sk','Skins'],['pre','Reboot']].map(([k,t])=>`<button data-t="${k}" class="${tab==k?'on':''}">${t}</button>`).join('')}</div>`;
+ if(tab=='up'){const V=shown(),hid=UP.filter(q=>!unlocked(q)).length;
+  h+=`<p class="lv" style="margin:0 0 6px">${UP.length} upgrades · <label><input type="checkbox" data-hm="1" ${S.hideMax?'checked':''}> hide maxed</label></p>`;
+  h+=V.map(q=>{const l=lv(q.id),c=cost(q),mx=maxed(q),can=c<=S.cash&&!mx;
+  return`<div class="card ${mx?'lock':''}"><div class="ic">${q.i}</div><div class="tx"><b>${q.n}</b> <span class="lv">${q.k=='pack'?'queued '+l:q.m?l+'/'+q.m:'Lv '+l}</span><br><small>${q.d}</small></div><button data-b="${q.id}" ${can?'':'disabled'}>${mx?'MAX':'$'+fmt(c)}</button></div>`}).join('');
+  if(hid)h+=`<p class="lv" style="text-align:center">🔒 ${hid} more upgrades unlock as you earn</p>`}
+ if(tab=='ab'){h+=`<p class="lv">Choose what SPACE (or tapping) does while he is falling. Every use costs one charge, and you get ${2+ST.charges} charges per run (buy Extra Charges for more).</p>`+ABIL.map(([id,n2,ic,d,c])=>{const own=S.abil[id],eq=S.eq==id;
+   return`<div class="card ${eq||own||c<=S.cash?'':'lock'}" style="${eq?'border-left-color:#35c866':''}"><div class="ic">${ic}</div><div class="tx"><b>${n2}</b>${eq?' <span class="lv">EQUIPPED</span>':''}<br><small>${d}</small></div><button data-ab="${id}" ${eq||(!own&&c>S.cash)?'disabled':''}>${eq?'ON':own?'Equip':'$'+fmt(c)}</button></div>`}).join('')}
+ if(tab=='ach')h+=`<p class="lv">Each award: +0.5% cash (max +50%). Now x${achM().toFixed(2)}. Skins unlock with awards.</p>`+AC_.map(a=>`<div class="card ${S.ach[a.id]?'':'lock'}"><div class="ic">${S.ach[a.id]?'🏆':'🔒'}</div><div class="tx"><b>${a.n}</b><br><small>${a.d}</small></div></div>`).join('');
+ if(tab=='sk')h+=SK.map((k,i)=>{const ok=nAch()>=k[3];return`<div class="card ${ok?'':'lock'}"><div class="ic">🧍</div><div class="tx"><b>${k[0]}</b><br><small>${ok?(S.skin==i?'Equipped':'Unlocked'):'Needs '+k[3]+' awards'}</small></div><button data-sk="${i}" ${ok&&S.skin!=i?'':'disabled'}>${S.skin==i?'ON':ok?'Wear':'🔒'}</button></div>`}).join('');
+ if(tab=='pre'){const g=fameGain(),need=rebootNeed(),ok=S.earned>=need&&g>=1;h+=`<div class="card"><div class="tx"><b>⭐ Reboot the Franchise</b><br><small>Reset cash and upgrades. Each Fame = +15% cash forever, and every reboot adds another dummy you push at once (max 10; you push ${nDummies()} now). Each reboot costs more: you need $${fmt(need)} earned this franchise (you have $${fmt(S.earned)}). Awards, skins and abilities are kept.</small></div></div><button class="big" style="width:100%" data-r="1" ${ok?'':'disabled'}>${ok?(confirmR?'Really? Tap again!':'Reboot for +'+g+' Fame'):'Need $'+fmt(need)+' earned'}</button>`}
+ $('panel').innerHTML=h;$('panel').scrollTop=sc;sig=mkSig();
+}
+$('panel').addEventListener('click',e=>{
+ const hm=e.target.closest('[data-hm]');if(hm){S.hideMax=hm.checked?1:0;render();save();return}
+ const t=e.target.closest('button');if(!t)return;
+ if(t.dataset.t){tab=t.dataset.t;confirmR=0;render()}
+ else if(t.dataset.sk){S.skin=+t.dataset.sk;if(S.skin>0)award('skindeep');render();save()}
+ else if(t.dataset.ab){const a=ABIL.find(x=>x[0]==t.dataset.ab);if(S.abil[a[0]]){S.eq=a[0];award('switcher')}else if(S.cash>=a[4]){S.cash-=a[4];S.abil[a[0]]=1;S.eq=a[0];award('firstability');beep(800,.06)}render();save()}
+ else if(t.dataset.b){const q=UP.find(x=>x.id==t.dataset.b),c=cost(q);if(!maxed(q)&&S.cash>=c){S.cash-=c;S.st.bought++;if(q.k=='pack'){S.pack++;S.lv[q.id]=S.pack}else S.lv[q.id]=lv(q.id)+1;
+  calc();beep(800,.06);
+  if(c>=1e6)award('bigticket');if(maxed(q)&&q.k!='pack')award('maxed');if(S.cash<1&&c>=1000)award('broke');if(q.id=='coupon')award('coupon');if(q.id=='autopusher')award('handsfree');if(q.id=='escalator')award('escalnow');
+  if(mode=='ready'){const keep=meter.v;build();meter.v=keep}chk();render();save()}}
+ else if(t.dataset.r){if(S.earned<rebootNeed())return;if(!confirmR){confirmR=1;render();return}
+  const g=fameGain();S.fame+=g;if(g>=10)award('reboot1');S.cash=0;S.earned=0;S.lv={};S.pack=0;S.st.reboots++;calc();chk();confirmR=0;tab='up';stains=[];build();mode='ready';$('res').style.display='none';render();save();toast('⭐ Franchise rebooted! +1 dummy')}
+});
+addEventListener('keydown',e=>{if(e.code=='Space'||e.code=='Enter'){e.preventDefault();if(document.activeElement)document.activeElement.blur();if(!e.repeat)act()}});
+addEventListener('keyup',e=>{if(e.code=='Space')e.preventDefault()});
+$('stage').addEventListener('pointerdown',e=>{if(mode!='result')act()});
+$('res').addEventListener('pointerdown',e=>e.stopPropagation());$('title').addEventListener('pointerdown',e=>e.stopPropagation());
+$('play').onclick=start;$('mute').textContent=S.mute?'🔇':'🔊';$('mute').onclick=()=>{S.mute=S.mute?0:1;if(S.mute)award('silent');$('mute').textContent=S.mute?'🔇':'🔊';save()};
+$('auto').onclick=()=>{S.autoOn=S.autoOn?0:1;save()};
+$('tstats').textContent=S.runs?`Best run: ${fmt(S.best)} damage · ${S.runs} runs · ⭐ ${S.fame} Fame`:'Time the meter. Shove the guy. Upgrade the stairs.';
+$('bl').checked=!!S.blood;$('bl').onchange=e=>{S.blood=e.target.checked?1:0;if(!S.blood)award('squeam');save()};
+setInterval(save,5000);
+// ================= BOOT =================
+calc(false);newZone();build();resize();chk();render();
+let lt=performance.now(),acc=0,lc='';
+function loop(t){acc+=Math.min(100,t-lt);lt=t;while(acc>=16.667){step();acc-=16.667}draw();fr++;
+ const c=fmt(S.cash)+'|'+S.fame+'|'+n+'|'+D.length+'|'+ST.autop+'|'+S.autoOn;if(c!=lc){lc=c;$('cash').textContent=fmt(S.cash);$('fame').textContent=S.fame;$('stairs').textContent='🪜 '+n+' steps'+(D.length>1?' · 👥 ×'+D.length:'');$('auto').style.display=ST.autop?'':'none';$('auto').textContent=S.autoOn?'🦾 AUTO ON':'🦾 AUTO OFF'}
+ if(fr%8==0&&mkSig()!=sig)render();
+ requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+</script></body></html>
