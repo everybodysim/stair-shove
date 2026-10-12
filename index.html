@@ -43,8 +43,12 @@ canvas{width:100%;height:100%;display:block;touch-action:manipulation}
 #toast{position:fixed;top:48px;right:8px;display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:9}
 #toast div{background:#241a3d;color:#fff;border-left:4px solid gold;padding:7px 11px;border-radius:8px;animation:t 4s forwards;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 @keyframes t{0%{opacity:0;transform:translateX(30px)}8%,85%{opacity:1;transform:none}100%{opacity:0}}
+#res{padding:8px;box-sizing:border-box}
+.box{max-height:100%;overflow-y:auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+.box .big{position:sticky;bottom:0}
+@media(max-width:700px){.box{padding:10px 14px;max-width:96%}.box h2{font-size:17px;margin-bottom:4px}.box .g{gap:1px 12px;margin:6px 0;font-size:12px}.box .big{padding:8px 20px;font-size:17px}.box>div[style]{margin-bottom:6px!important;font-size:12px}#top .brand{font-size:16px}.chip{padding:3px 8px;font-size:12px}}
 </style></head><body>
-<div id="top"><b class="brand">🪜 STAIR SHOVE</b><span class="chip">💰 $<span id="cash">0</span></span><span class="chip">⭐ <span id="fame">0</span></span><span class="chip" id="stairs"></span><span class="r"><button id="auto" class="ibtn" style="display:none"></button><button id="mute" class="ibtn">🔊</button><label class="chip">🩸 <input type="checkbox" id="bl"></label></span></div>
+<div id="top"><b class="brand">🪜 STAIR SHOVE</b><span class="chip">💰 $<span id="cash">0</span></span><span class="chip">⭐ <span id="fame">0</span></span><span class="chip" id="stairs"></span><span class="r"><button id="auto" class="ibtn" style="display:none"></button><button id="restart" class="ibtn">↻ Restart (R)</button><button id="mute" class="ibtn">🔊</button><label class="chip">🩸 <input type="checkbox" id="bl"></label></span></div>
 <div id="main"><div id="stage"><canvas id="cv"></canvas><div id="title"><div class="logo">STAIR<br>SHOVE</div><p id="tstats"></p><button class="big" id="play">▶ PLAY</button><small>Click or press Space</small></div><div id="res"><div class="box" id="box"></div></div></div><div id="panel"></div></div>
 <div id="toast"></div>
 <script>
@@ -650,11 +654,12 @@ $('panel').addEventListener('click',e=>{
  else if(t.dataset.r){if(S.earned<rebootNeed())return;if(!confirmR){confirmR=1;render();return}
   const g=fameGain();S.fame+=g;if(g>=10)award('reboot1');S.cash=0;S.earned=0;S.lv={};S.pack=0;S.st.reboots++;calc();chk();confirmR=0;tab='up';stains=[];build();mode='ready';$('res').style.display='none';render();save();toast('⭐ Franchise rebooted! +1 dummy')}
 });
-addEventListener('keydown',e=>{if(e.code=='Space'||e.code=='Enter'){e.preventDefault();if(document.activeElement)document.activeElement.blur();if(!e.repeat)act()}});
+addEventListener('keydown',e=>{if(e.code=='KeyR'&&started&&!e.repeat){e.preventDefault();again();return}if(e.code=='Space'||e.code=='Enter'){e.preventDefault();if(document.activeElement)document.activeElement.blur();if(!e.repeat)act()}});
 addEventListener('keyup',e=>{if(e.code=='Space')e.preventDefault()});
 $('stage').addEventListener('pointerdown',e=>{if(mode!='result')act()});
 $('res').addEventListener('pointerdown',e=>e.stopPropagation());$('title').addEventListener('pointerdown',e=>e.stopPropagation());
 $('play').onclick=start;$('mute').textContent=S.mute?'🔇':'🔊';$('mute').onclick=()=>{S.mute=S.mute?0:1;if(S.mute)award('silent');$('mute').textContent=S.mute?'🔇':'🔊';save()};
+$('restart').onclick=e=>{e.currentTarget.blur();if(started)again()};
 $('auto').onclick=()=>{S.autoOn=S.autoOn?0:1;save()};
 $('tstats').textContent=S.runs?`Best run: ${fmt(S.best)} damage · ${S.runs} runs · ⭐ ${S.fame} Fame`:'Time the meter. Shove the guy. Upgrade the stairs.';
 $('bl').checked=!!S.blood;$('bl').onchange=e=>{S.blood=e.target.checked?1:0;if(!S.blood)award('squeam');save()};
