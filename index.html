@@ -66,8 +66,8 @@ const SUF=['','K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];
 function fmt(n){n=Math.floor(n);if(n<1000)return''+n;const e=Math.min(SUF.length-1,Math.floor(Math.log10(n)/3));return(n/10**(e*3)).toFixed(2).replace(/\.?0+$/,'')+SUF[e]}
 const lv=id=>S.lv[id]||0,rnd=a=>a[Math.random()*a.length|0],pc=p=>Math.round(p*1000)/10+'%';
 // ================= UPGRADES (every one hand-named and hand-written) =================
-const LN=['Torso','Skull','Left Bicep','Left Forearm','Right Bicep','Right Forearm','Left Thigh','Left Shin','Right Thigh','Right Shin'];
-const LG=['torso','head','bic','fore','bic','fore','thigh','shin','thigh','shin'];
+const LN=['Torso','Skull','Left Bicep','Left Forearm','Right Bicep','Right Forearm','Left Thigh','Left Shin','Right Thigh','Right Shin','Spider Arm L','Spider Arm R','Spider Leg L','Spider Leg R'];
+const LG=['torso','head','bic','fore','bic','fore','thigh','shin','thigh','shin','bic','bic','thigh','thigh'];
 const UP=[];
 // pf = how many levels always work; levels above that only work on perfect shoves
 function u(id,n,i,k,p,b,g,m,d,pf,rq){if(pf!=null&&m>pf)d+=` Level${m>pf+1?'s '+(pf+1)+'-'+m:' '+m} only work${m>pf+1?'':'s'} on perfect shoves.`;UP.push({id,n,i,k,p,b,g,m,d,pf,rq})}
@@ -130,7 +130,7 @@ u('ot','Overtime','⏰','ot',1,3000000,2.1,4,'Runs that go past 40 seconds earn 
 u('domino','Domino Effect','🁢','domino',1,3500000,2.1,3,'The few hits right after a limb breaks pay +15% more each level.');
 u('collect','Limb Collector','🧺','collect',1,5000000,2.2,3,'Each different body part broken this run pays 8% of run cash at the end, per level. Break all 10 for a big extra payout.');
 u('last','Last Laugh','🤡','last',1,7000000,2.3,3,'A dummy losing its last body part pays out big. More levels = bigger payout.');
-u('spidey','Spider-Man','🕷️','spidey',1,12000000,2,1,'Your lead dummy grows two extra arms and two extra legs, and all his hits deal 30% more damage. Requires a reboot.',null,1);
+u('spidey','Spider-Man','🕷️','spidey',1,12000000,2,1,'Your lead dummy grows two extra arms and two extra legs - real ones, they flail, hit and snap off like any other limb - and all his hits deal 30% more damage. Requires a reboot.',null,1);
 u('factory','The Stair Factory','🏭','factory',1,25000000,2,3,'While a run is going, the factory shoves a fresh dummy every second or so. The camera becomes free: drag to pan, scroll to zoom. The final upgrade.',null,2);
 const SCAP={coupon:.25,spons:.2,crit:.5,air:.15,grav:.2,pw:.2,slow:.6,hp:1,stairDisc:.3,comboKeep:.5,comboWin:1.5};
 const KEYS=[...new Set(UP.map(q=>q.k))];
@@ -217,9 +217,11 @@ const SW=70,SH=44,X0=300,Y0=300,G=.14,K={gx:.015,e:.3,ft:.985,dm:.3,base:.25,win
 const LB=[['torso',[0,-34],[0,-62],160,5,5],['head',[0,-62],[0,-80],70,3,10],['lUA',[0,-60],[-9,-46],50,3,3],['lFA',[-9,-46],[-11,-30],40,3,3],['rUA',[0,-60],[9,-46],50,3,3],['rFA',[9,-46],[11,-30],40,3,3],['lTh',[0,-34],[-6,-17],70,4,4],['lSh',[-6,-17],[-7,0],55,4,4],['rTh',[0,-34],[6,-17],70,4,4],['rSh',[6,-17],[7,0],55,4,4]];
 const HIP=0,HEAD=3;
 const JT0=[[1,0,-.6,.9,2,1],[2,0,-2.6,2.6,4,1],[3,2,-2.4,.2,6,5],[4,0,-2.6,2.6,8,1],[5,4,-2.4,.2,10,9],[6,0,-2,.7,12,0],[7,6,0,2.5,14,13],[8,0,-2,.7,16,0],[9,8,0,2.5,18,17]];
-const PAR={1:0,2:0,3:2,4:0,5:4,6:0,7:6,8:0,9:8}; // limb -> the limb it hangs from
+const SPB=[['lSA',[0,-60],[-16,-47],55,3,3],['rSA',[0,-60],[16,-47],55,3,3],['lSL',[0,-34],[-14,-13],60,4,4],['rSL',[0,-34],[14,-13],60,4,4]]; // spider-man bonus limbs: same physics as everything else
+const SPJ=[[10,0,-2.9,2.9,20,1],[11,0,-2.9,2.9,22,1],[12,0,-2.9,2.9,24,0],[13,0,-2.9,2.9,26,0]]; // pinned to shoulder/hip, wide angle limits so they flail
+const PAR={1:0,2:0,3:2,4:0,5:4,6:0,7:6,8:0,9:8,10:0,11:0,12:0,13:0}; // limb -> the limb it hangs from
 const gone=i=>{let k=i;while(k>0){if(LM[k].broken)return 1;k=PAR[k]}return 0}; // has this limb (or whatever it hangs from) fallen off the body?
-let n,rects,haz,D=[],pts,LM,JT,CD,mode='ready',ZPh=0,cam={x:X0+160,y:Y0+100,zm:1,tx:X0+160,ty:Y0+100,tz:1},shake=0,pops=[],parts=[],stains=[],meter={v:0,d:1},readyT=0,dirty=1,TR=new Set(),CR=new Set(),PUN={},resultT=0,escPhase=0,ZC=.5;
+let n,rects,haz,D=[],pts,LM,JT,CD,mode='ready',ZPh=0,cam={x:X0+160,y:Y0+100,zm:1},shake=0,pops=[],parts=[],stains=[],meter={v:0,d:1},readyT=0,dirty=1,TR=new Set(),CR=new Set(),PUN={},resultT=0,escPhase=0,ZC=.5;
 let freeze=0,punch=0,flashA=0,started=false,lastFreeze=-99;const FNT='"Lilita One",Impact,system-ui,sans-serif';
 const BULL=.008,mw=()=>.08+ST.pw,newZone=()=>{ZC=.22+Math.random()*.56};
 const wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a};
@@ -233,9 +235,10 @@ const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i]
 const LJ=[[750,.05],[1300,.1],[1850,.15],[2400,.2],[2950,.25],[3500,.3]];
 function makeDummy(i){
  const sx=X0-14-i*26,sy=Y0-4,P=[];
- const lm=LB.map((l,i2)=>{[1,2].forEach(k=>{const q=l[k];P.push({x:sx+q[0],y:sy+q[1],px:sx+q[0],py:sy+q[1],r:k==1?l[4]:l[5],cd:0,l:i2,head:i2==1&&k==2})});const hp=l[3]*hpMult();return{n:l[0],hp,max:hp,lvl:0,broken:0,bleed:0,fix:0,len:Math.hypot(l[2][0]-l[1][0],l[2][1]-l[1][1])}});
+ const spide=i==0&&ST.spidey,bones=spide?LB.concat(SPB):LB;
+ const lm=bones.map((l,i2)=>{[1,2].forEach(k=>{const q=l[k];P.push({x:sx+q[0],y:sy+q[1],px:sx+q[0],py:sy+q[1],r:k==1?l[4]:l[5],cd:0,l:i2,head:i2==1&&k==2})});const hp=l[3]*hpMult();return{n:l[0],hp,max:hp,lvl:0,broken:0,bleed:0,fix:0,len:Math.hypot(l[2][0]-l[1][0],l[2][1]-l[1][1])}});
  const d={i,pts:P,LM:lm,JT:null,pa:null,ang:0,av:0,bs:99,rest:0,air:99,touch:0,gf:-99,done:0,fl:0,ice:0,pg:sx,pgf:0,fin:0,cb:0,last:-999,hf:0,kicks:0,nudged:0,xw:0,ign:0,ll:-1,llf:-99,af:0,cr:{},spn:null};
- cur(d);d.JT=JT0.map(j=>({c:j[0],p:j[1],lo:j[2],hi:j[3],a:j[4],b:j[5],rest:wrap(ang(j[0])-ang(j[1]))}));return d}
+ cur(d);d.JT=(spide?JT0.concat(SPJ):JT0).map(j=>({c:j[0],p:j[1],lo:j[2],hi:j[3],a:j[4],b:j[5],rest:wrap(ang(j[0])-ang(j[1]))}));return d}
 // all stair geometry lives in rects: 0 = top platform, 1..n-1 = stairs, n = floor, n+1 = the step that rises out of the floor on an escalator
 function layout(full){
  const sw=SW*escPhase,sh=SH*escPhase;
@@ -302,7 +305,7 @@ function breakLimb(i){
  if(i==1&&R.f<180)R.fastHead=1;
  if(R.bands>0){R.bands--;L.fix=R.f+90}
  if(i>0)R.dom=8; // domino effect window opens on every limb break
- if(ST.last&&LM.reduce((s,L,ix)=>s+(ix>0&&L.broken),0)>=9){bonus(200*ST.last,'LAST LAUGH!','#ff5f5f');R.lasted=1;shake+=12}
+ if(ST.last&&LM.reduce((s,L,ix)=>s+(ix>0&&ix<10&&L.broken),0)>=9){bonus(200*ST.last,'LAST LAUGH!','#ff5f5f');R.lasted=1;shake+=12}
  const e=pts[2*i+1];bonus(i==0?80:12,i==0?'TOTAL TEARDOWN!':'SNAP!','#f55');shake+=8;snap();
  for(let k=0;k<14;k++)parts.push({x:e.x,y:e.y,vx:(Math.random()-.5)*8,vy:-Math.random()*6,l:35,c:'#fff',s:3});
  spray(e.x,e.y,i==0?70:40,5);
@@ -447,7 +450,7 @@ function deathMsg(){
 }
 function endRun(){
  mode='result';resultT=0;S.runs++;R.time=R.f/60;let mxl=0,sum=0,dist=0;R.armless=0;R.legless=0;R.fin=0;const fl=X0+n*SW;
- for(const d of D){const k=d.LM.filter(l=>l.broken).length;mxl=Math.max(mxl,k);sum+=k;if(d.LM[2].broken&&d.LM[4].broken)R.armless=1;if(d.LM[6].broken&&d.LM[8].broken)R.legless=1;if(d.fin)R.fin++;dist=Math.max(dist,d.pts[HIP].x-fl)}
+ for(const d of D){const k=d.LM.slice(0,10).filter(l=>l.broken).length;mxl=Math.max(mxl,k);sum+=k;if(d.LM[2].broken&&d.LM[4].broken)R.armless=1;if(d.LM[6].broken&&d.LM[8].broken)R.legless=1;if(d.fin)R.fin++;dist=Math.max(dist,d.pts[HIP].x-fl)}
  R.lost=mxl;cur(D[0]);
  const rec=R.dmg>S.best;if(rec)S.best=R.dmg;
  let pct=(rec?ST.rec:0)+ST.limbPay*R.lost;
@@ -456,7 +459,7 @@ function endRun(){
  R.hjPct=0;if(ST.hj){R.hjPct=Math.min(.2*ST.hj,R.jump*.0015*ST.hj);ex+=R.cash*R.hjPct}
  R.replayed=0;if(ST.finale&&R.bestCash>0){ex+=R.bestCash*ST.finale;R.replayed=1}
  if(R.bull)ex+=R.cash*.5;
- const nb=Object.keys(R.br).length;if(ST.collect){ex+=R.cash*.08*nb*ST.collect;if(nb>=10){ex+=R.cash*.6*ST.collect;R.collected=1}}
+ const nb=[0,1,2,3,4,5,6,7,8,9].filter(ix=>R.br[ix]).length;if(ST.collect){ex+=R.cash*.08*nb*ST.collect;if(nb>=10){ex+=R.cash*.6*ST.collect;R.collected=1}}
  if(ST.drift&&R.perf)ex+=R.cash*.25*ST.drift;
  R.extra=ex;S.cash+=ex;S.earned+=ex;S.total+=ex;R.cash+=ex;
  // adaptive dummy strength: aim for runs that end with a few parts still attached
@@ -483,14 +486,14 @@ function act(){if(!started){start();return}if(mode=='ready')shove();else if(mode
 function step(){
  if(CHEAT_INFINITE_MONEY){S.cash=Math.max(S.cash,1e15);S.earned=Math.max(S.earned,1e15)}
  if(ST.esc){escPhase+=ST.esc*.0105;if(escPhase>=1){escPhase-=1;escWrap()}layout(true)}else if(escPhase){escPhase=0;layout(true)}else layout(false);
- if(mode=='ready'){readyT++;if(ST.drift){ZPh+=.016*Math.max(.2,1-.25*(ST.drift-1));ZC=.5+.34*Math.sin(ZPh)}meter.v+=meter.d*.022*(1-ST.slow);if(meter.v>=1){meter.v=1;meter.d=-1}if(meter.v<=0){meter.v=0;meter.d=1}cam.tx+=(X0+160-cam.tx)*.08;cam.ty+=(Y0+100-cam.ty)*.08;cam.x+=(cam.tx-cam.x)*.15;cam.y+=(cam.ty-cam.y)*.15;cam.tz+=(1-cam.tz)*.08;cam.zm+=(cam.tz-cam.zm)*.12;
+ if(mode=='ready'){readyT++;if(ST.drift){ZPh+=.016*Math.max(.2,1-.25*(ST.drift-1));ZC=.5+.34*Math.sin(ZPh)}meter.v+=meter.d*.022*(1-ST.slow);if(meter.v>=1){meter.v=1;meter.d=-1}if(meter.v<=0){meter.v=0;meter.d=1}cam.x+=(X0+160-cam.x)*.08;cam.y+=(Y0+100-cam.y)*.08;cam.zm+=(1-cam.zm)*.08;
   if(ST.autop>0&&S.autoOn&&started&&readyT>70){ // the Autopusher: never a bullseye, that is yours to earn
    if(Math.random()<.2+.15*(ST.autop-1))meter.v=ZC+(Math.random()<.5?-1:1)*(BULL+.01+Math.random()*(mw()/2-BULL-.02));else{let v=.1+Math.random()*.8;if(Math.abs(v-ZC)<mw()/2+.03)v=ZC>.5?.12:.88;meter.v=v}
    shove()}}
  if(mode=='result'&&ST.autop>0&&S.autoOn&&++resultT>150)again();
  if(mode=='run'&&freeze>0)freeze--;
  else if(mode=='run'){
-  R.f++;let alive=0,cx=0,cy=0,vsx=0,vsy=0,mxs=R.step,stall=false;const trackers=[];
+  R.f++;let alive=0,cx=0,cy=0,vsx=0,vsy=0,mxs=R.step,stall=false;
   for(const j in PUN){const pu=PUN[j];
    if(pu.t>0){pu.t++;const old=pu.off;
     if(pu.t>=3&&pu.t<=7)pu.off=Math.min(90,pu.off+18);else if(pu.t>22)pu.off=Math.max(0,pu.off-3.5); // the step slams up in 5 frames, holds, then sinks back
@@ -524,36 +527,17 @@ function step(){
     mxs=Math.max(mxs,Math.min(n,Math.max(0,Math.floor((h.x-X0)/SW)+1)));
     if(!d.done){alive++;if(d.bs<2.2&&d.air<8)stall=true}
    }
-   cx+=pts[HIP].x;cy+=pts[HIP].y;vsx+=(pts[HIP].x-pts[HIP].px)*2;vsy+=(pts[HIP].y-pts[HIP].py)*2;
-   const nint=LM.reduce((s,L,ix)=>s+(ix>0&&!L.broken),0); // camera only cares about dummies that still have parts attached; loose single parts never pull it
-   if(nint>0){let tx2=0,ty2=0,c2=0;pts.forEach(p=>{if(gone(p.l))return;tx2+=p.x;ty2+=p.y;c2++});
-    if(c2)trackers.push({x:tx2/c2,y:ty2/c2,w:1+nint/9,i:d.i,fact:d.i>=R.dn,mv:!d.done&&d.bs>2.2})}}
+   if(d.i<R.dn){cx+=pts[HIP].x;cy+=pts[HIP].y;vsx+=(pts[HIP].x-pts[HIP].px)*2;vsy+=(pts[HIP].y-pts[HIP].py)*2}} // factory dummies never move the camera
   while(R.step<mxs){R.step++;S.st.steps++}
   if(ST.auto>0&&R.auto<ST.auto&&R.boost>0&&R.f>90&&stall){R.auto++;pop(pts[HIP].x,pts[HIP].y-70,'AUTOPILOT!','#8ff',20);useAbility('boost',true)}
   if(ST.factory&&R.f>120&&!D.slice(0,R.dn).every(d=>d.done)){ // the factory keeps feeding the stairs while your own dummies are still going
    R.spT++;const iv=Math.max(30,90-15*(ST.factory-1));
    if(R.spT>=iv&&D.length<R.dn+6+4*ST.factory){R.spT=0;spawnDummy()}}
-  if(!(ST.factory&&R.camLocked)){ // free camera after a drag; otherwise the camera picks its own action
-   // who the camera cares about: your own dummies first. Factory dummies only matter once nothing else is moving,
-   // otherwise every spawn yanks the view around.
-   const orig=trackers.filter(q=>!q.fact);
-   let cands=orig.some(q=>q.mv)?orig.filter(q=>q.mv):trackers.filter(q=>q.mv);
-   if(!cands.length)cands=orig.length?orig:trackers;
-   let twx,twy,spread=0;
-   if(cands.length){
-    let anchor=cands[0];for(const q of cands)if(q.x>anchor.x)anchor=q; // the furthest one down the stairs wins
-    const bunch=cands.filter(q=>Math.hypot(q.x-anchor.x,q.y-anchor.y)<520); // keep whoever is near the action, drop the rest
-    let sx2=0,sy2=0,sw=0;for(const q of bunch){sx2+=q.x*q.w;sy2+=q.y*q.w;sw+=q.w}
-    twx=sx2/sw;twy=sy2/sw;
-    for(const q of bunch)spread=Math.max(spread,Math.hypot(q.x-twx,q.y-twy))}
-   else{const nd=D.length;twx=cx/nd;twy=cy/nd} // nothing but loose parts left: average them
-   const col=Math.min(n,Math.max(0,Math.floor((twx+90-X0)/SW)+1)),gy=rects[col].t;
-   const tx=twx+90,ty=Math.max(twy,gy-90);
-   const ddx=(tx-cam.tx)*.1,ddy=(ty-cam.ty)*.1,MT=12; // ease the target, capped to 12px/frame so handoffs glide instead of whipping
-   cam.tx+=Math.max(-MT,Math.min(MT,ddx));cam.ty+=Math.max(-MT,Math.min(MT,ddy));
-   cam.x+=(cam.tx-cam.x)*.2;cam.y+=(cam.ty-cam.y)*.2;
-   const zt=cands.length?Math.max(.42,Math.min(1,1/(1+spread/650))):1; // spread out = zoom out, and always show the whole bunch
-   cam.tz+=(zt-cam.tz)*.08;cam.zm+=(cam.tz-cam.zm)*.12}
+  if(!(ST.factory&&R.camLocked)){ // freecam after a drag; otherwise the classic follow. Factory dummies never move the camera.
+   const nd=R.dn,ax=cx/nd,col=Math.min(n,Math.max(0,Math.floor((ax-X0)/SW)+1)),gy=rects[col].t;
+   const tx=ax+90,ty=Math.max(cy/nd,gy-90);
+   cam.x+=(tx-cam.x)*Math.min(.85,.1+Math.abs(tx-cam.x)/250);cam.y+=(ty-cam.y)*Math.min(.85,.1+Math.abs(ty-cam.y)/200);
+   cam.zm+=(1-cam.zm)*.1}
   if(alive==0||R.f>30000)endRun();
  }
  shake*=.88;punch*=.85;flashA*=.85;for(const p of pops){p.y-=.6;p.l--}pops=pops.filter(p=>p.l>0);
@@ -594,18 +578,7 @@ function drawDummy(){
  const hip=pts[HIP],kk=Math.min(n,Math.max(0,Math.floor((hip.x-X0)/SW)+1)),gy=rects[kk].t,dd=gy-hip.y;
  if(dd>0&&dd<300){ctx.fillStyle=`rgba(0,0,0,${.3*(1-dd/300)})`;ctx.beginPath();ctx.ellipse(hip.x,gy,28*(1-dd/420),5,0,0,7);ctx.fill()}
  const SKI=S.skin,SKN_=SK[SKI]||SK[0];ctx.lineCap='round';ctx.textAlign='center';
- if(ST.spidey&&CD.i==0){ // spider limbs: two extra arms and two extra legs, purely decorative wiggles
-  const up=pts[1],lo=pts[0],ta=Math.atan2(up.y-lo.y,up.x-lo.x)+Math.PI/2,ph=fr/9;
-  ctx.strokeStyle=tint(SKN_[1],0);ctx.lineWidth=4;ctx.fillStyle=tint(SKN_[1],0);
-  for(let k=0;k<4;k++){const arm=k<2,side=k%2?1:-1,ln=arm?17:21;
-   const ox=arm?up.x:lo.x,oy=arm?up.y:lo.y;
-   const px2=-Math.cos(ta)*side,py2=-Math.sin(ta)*side; // perpendicular to the body
-   const wob=Math.sin(ph*1.7+k*1.9)*.3,drop=arm?-.5+Math.sin(ph+k)*.2:.6+Math.cos(ph*1.2+k)*.2;
-   const jx=ox+px2*ln*.55, jy=oy+py2*ln*.55-ln*drop*.35;
-   const ex2=jx+px2*ln*.5, ey2=jy+py2*ln*.5+ln*drop*.55+ln*wob*.3;
-   ctx.beginPath();ctx.moveTo(ox,oy);ctx.quadraticCurveTo(jx,jy,ex2,ey2);ctx.stroke();
-   ctx.beginPath();ctx.arc(jx,jy,2.2,0,7);ctx.fill();
-   ctx.beginPath();ctx.arc(ex2,ey2,2.8,0,7);ctx.stroke()}}
+
  for(const pass of[0,1,2])LM.forEach((L,i)=>{const A=pts[2*i],B=pts[2*i+1],bw=i==0?11:i==1?3:6;
   ctx.strokeStyle=pass==0?SKN_[2]:pass==1?tint(SKN_[1],L.lvl):'rgba(255,255,255,.3)';ctx.lineWidth=pass==0?bw+3:pass==1?bw:bw*.3;
   const o=pass==2?-bw*.2:0;ctx.beginPath();ctx.moveTo(A.x+o,A.y+o);ctx.lineTo(B.x+o,B.y+o);ctx.stroke()});
