@@ -57,7 +57,7 @@ const CHEAT_INFINITE_MONEY=false;
 const $=id=>document.getElementById(id),cv=$('cv'),ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
 function resize(){DPR=Math.min(devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*DPR;cv.height=H*DPR}
-const DEFST={streak:0,perfects:0,limbs:0,boosts:0,bought:0,reboots:0,blood:0,maxStairs:0,hits:0,flips:0,heads:0,steps:0,crits:0,jackpots:0,dmg:0,hz:{},lb:[0,0,0,0,0,0,0,0,0,0],skinRuns:{},maxDummies:1,synergies:0,pr:{},meals:{},bestJump:0,packs:0,pmul:1};
+const DEFST={streak:0,perfects:0,limbs:0,boosts:0,bought:0,reboots:0,blood:0,maxStairs:0,hits:0,flips:0,heads:0,steps:0,crits:0,jackpots:0,dmg:0,hz:{},lb:[0,0,0,0,0,0,0,0,0,0],skinRuns:{},maxDummies:1,synergies:0,pr:{},meals:{},bestJump:0,packs:0,pmul:1,hpA:1,lastLost:0};
 const DEF={cash:0,earned:0,total:0,fame:0,best:0,runs:0,lv:{},ach:{},skin:0,blood:1,hideMax:0,mute:0,abil:{boost:1},eq:'boost',pack:0,autoOn:1,st:DEFST};
 function load(){try{const j=JSON.parse(localStorage.getItem('stairshove5'));if(j){const o=Object.assign(structuredClone(DEF),j);o.st=Object.assign(structuredClone(DEFST),j.st||{});return o}}catch(e){}return structuredClone(DEF)}
 let S=load();
@@ -70,7 +70,7 @@ const LN=['Torso','Skull','Left Bicep','Left Forearm','Right Bicep','Right Forea
 const LG=['torso','head','bic','fore','bic','fore','thigh','shin','thigh','shin'];
 const UP=[];
 // pf = how many levels always work; levels above that only work on perfect shoves
-function u(id,n,i,k,p,b,g,m,d,pf){if(pf!=null&&m>pf)d+=` Level${m>pf+1?'s '+(pf+1)+'-'+m:' '+m} only work${m>pf+1?'':'s'} on perfect shoves.`;UP.push({id,n,i,k,p,b,g,m,d,pf})}
+function u(id,n,i,k,p,b,g,m,d,pf,rq){if(pf!=null&&m>pf)d+=` Level${m>pf+1?'s '+(pf+1)+'-'+m:' '+m} only work${m>pf+1?'':'s'} on perfect shoves.`;UP.push({id,n,i,k,p,b,g,m,d,pf,rq})}
 u('push','Stronger Shove','💪','push',.35,15,1.35,10,'+0.35 launch power.',6);
 u('morestairs','More Stairs','🪜','more',1,30,1.17,0,'Adds 2 more stairs every time you buy it. No limit!');
 u('master','Master Builder','🏗️','master',1,25000,2,10,'Every More Stairs purchase adds +1 extra stair, including the ones you already bought.');
@@ -124,13 +124,21 @@ u('rocketpad','Rocket Pads','🚀','rocket',1,30000,1.9,5,'+1 launch pad on the 
 u('cannon','Cannon','🛢️','cannon',1,120000,2,4,'+1 cannon on the stairs that shoots him far down.');
 u('arc','Higher Launch Arc','📈','hop',.1,300,1.6,5,'+10% launch height. Even stronger on perfect shoves.');
 u('dizzy','Dizzy Launch','😵','spin',.2,250,1.6,5,'+20% launch spin. Even stronger on perfect shoves.');
+u('drift','Drifting Green Zone','🟩','drift',1,900000,2.2,5,'The green zone slides up and down the bar. Each level slows it down a little and pays +25% more on perfect shoves.');
+u('hitrec','Personal Best','🥇','hitrec',1,2500000,2.1,5,'Any hit that beats your best hit so far this run pays a bonus for how much it beat it by. More levels = bigger bonus.');
+u('ot','Overtime','⏰','ot',1,3000000,2.1,4,'Runs that go past 40 seconds earn +25% cash per level from then on.');
+u('domino','Domino Effect','🁢','domino',1,3500000,2.1,3,'The few hits right after a limb breaks pay +15% more each level.');
+u('collect','Limb Collector','🧺','collect',1,5000000,2.2,3,'Each different body part broken this run pays 8% of run cash at the end, per level. Break all 10 for a big extra payout.');
+u('last','Last Laugh','🤡','last',1,7000000,2.3,3,'A dummy losing its last body part pays out big. More levels = bigger payout.');
+u('spidey','Spider-Man','🕷️','spidey',1,12000000,2,1,'Your lead dummy grows two extra arms and two extra legs, and all his hits deal 30% more damage. Requires a reboot.',null,1);
+u('factory','The Stair Factory','🏭','factory',1,25000000,2,3,'While a run is going, the factory shoves a fresh dummy every second or so. The camera becomes free: drag to pan, scroll to zoom. The final upgrade.',null,2);
 const SCAP={coupon:.25,spons:.2,crit:.5,air:.15,grav:.2,pw:.2,slow:.6,hp:1,stairDisc:.3,comboKeep:.5,comboWin:1.5};
 const KEYS=[...new Set(UP.map(q=>q.k))];
 const ORDER=[...UP].sort((a,b)=>a.b-b.b);
 let E={},ST={};
-const cost=q=>q.k=='pack'?Math.floor(q.b*(S.st.pmul||1)):Math.floor(q.b*q.g**lv(q.id)*(S.st.pmul||1)*(1-ST.coupon)*(q.id=='morestairs'?1-ST.stairDisc:1)),maxed=q=>q.m&&lv(q.id)>=q.m,unlocked=q=>S.earned>=q.b*.35||lv(q.id)>0;
+const cost=q=>q.k=='pack'?Math.floor(q.b*(S.st.pmul||1)):Math.floor(q.b*q.g**lv(q.id)*(S.st.pmul||1)*(1-ST.coupon)*(q.id=='morestairs'?1-ST.stairDisc:1)),maxed=q=>q.m&&lv(q.id)>=q.m,unlocked=q=>(S.earned>=q.b*.35||lv(q.id)>0)&&(!q.rq||S.st.reboots>=q.rq);
 function calc(perf){ST={};for(const k of KEYS)ST[k]=0;for(const q of UP){let l=lv(q.id);if(q.pf!=null&&!perf)l=Math.min(l,q.pf);if(l)ST[q.k]+=l*q.p}for(const k in SCAP)ST[k]=Math.min(SCAP[k],ST[k])}
-const hpMult=()=>Math.max(.3,1+ST.hp+.1*ST.hs-.1*ST.glass);
+const hpMult=()=>Math.max(.3,(1+ST.hp+.1*ST.hs-.1*ST.glass)*(S.st.hpA||1)); // hpA drifts so dummies usually end a run with a few parts left
 // ================= SPACEBAR ABILITIES =================
 const ABIL=[['boost','Boost','🚀','Fires him up and forward. Great for reaching more stairs.',0],['flip','Frontflip','🤸','Spins him forward, fast. Flips pay bonus cash.',500],['back','Backflip','🔄','Spins him backward, fast.',500],['slam','Ground Pound','⏬','Slams him straight down so he hits the next step hard.',1500],['brake','Emergency Brake','🛑','Kills almost all of his speed so he stays on the stairs longer.',6000]];
 // ================= ACHIEVEMENTS (all hand-named) =================
@@ -211,7 +219,7 @@ const HIP=0,HEAD=3;
 const JT0=[[1,0,-.6,.9,2,1],[2,0,-2.6,2.6,4,1],[3,2,-2.4,.2,6,5],[4,0,-2.6,2.6,8,1],[5,4,-2.4,.2,10,9],[6,0,-2,.7,12,0],[7,6,0,2.5,14,13],[8,0,-2,.7,16,0],[9,8,0,2.5,18,17]];
 const PAR={1:0,2:0,3:2,4:0,5:4,6:0,7:6,8:0,9:8}; // limb -> the limb it hangs from
 const gone=i=>{let k=i;while(k>0){if(LM[k].broken)return 1;k=PAR[k]}return 0}; // has this limb (or whatever it hangs from) fallen off the body?
-let n,rects,haz,D=[],pts,LM,JT,CD,mode='ready',cam={x:X0+160,y:Y0+100,zm:1},shake=0,pops=[],parts=[],stains=[],meter={v:0,d:1},readyT=0,dirty=1,TR=new Set(),CR=new Set(),PUN={},resultT=0,escPhase=0,ZC=.5;
+let n,rects,haz,D=[],pts,LM,JT,CD,mode='ready',ZPh=0,cam={x:X0+160,y:Y0+100,zm:1},shake=0,pops=[],parts=[],stains=[],meter={v:0,d:1},readyT=0,dirty=1,TR=new Set(),CR=new Set(),PUN={},resultT=0,escPhase=0,ZC=.5;
 let freeze=0,punch=0,flashA=0,started=false,lastFreeze=-99;const FNT='"Lilita One",Impact,system-ui,sans-serif';
 const BULL=.008,mw=()=>.08+ST.pw,newZone=()=>{ZC=.22+Math.random()*.56};
 const wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a};
@@ -220,11 +228,7 @@ const cur=d=>{CD=d;pts=d.pts;LM=d.LM;JT=d.JT};
 const nDummies=()=>Math.min(10,1+S.st.reboots);
 const skinsOn=()=>SK.filter(k=>nAch()>=k[3]).length;
 const cashM=()=>(1+.15*S.fame)*achM()*(1+ST.spons)*((R&&R.rush>R.f)?1.5:1)*((R&&R.pack)?1.2:1);
-const rebootNeed=()=>25000*6**S.st.reboots;
-// money/sec per dummy count (1..10), measured headless: 100 fixed-shove runs each, no upgrades.
-// Used to keep prices honest: every reboot multiplies upgrade prices by .8 x fame growth x dummy growth,
-// so maxing an upgrade is never faster than 0.8x the previous franchise (usually slower).
-const RATE=[10.14,20.75,31.93,41.51,52.31,62.32,77.30,86.76,95.14,104.28];
+const rebootNeed=()=>25000*6**S.st.reboots; // dummies earn roughly linearly with reboots; upgrade prices scale at half that rate (see the reboot handler)
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const LJ=[[750,.05],[1300,.1],[1850,.15],[2400,.2],[2950,.25],[3500,.3]];
 function makeDummy(i){
@@ -266,7 +270,7 @@ function shove(){
  beep(300,.1);const m=meter.v,perf=Math.abs(m-ZC)<mw()/2,bull=Math.abs(m-ZC)<BULL;
  const hp0=hpMult();calc(perf);const hpr=hpMult()/hp0; // perfect shoves unlock the top levels of the strongest upgrades
  const pack=S.pack>0;if(pack){S.pack--;S.lv.powerpack=S.pack}
- R={f:0,dmg:0,cash:0,hitCash:0,bonusCash:0,best:0,bestCash:0,heads:0,flips:0,maxC:0,boost:2+ST.charges,bu:0,hz:0,crits:0,lost:0,time:0,flash:0,perf,bull,hits:0,step:0,lastBoost:-999,lastHaz:-999,burst:0,nextCrit:0,done:{},types:{},br:{},gh:{},dn:D.length,nn:n,fin:0,saves:ST.saves,auto:0,savedOnce:0,wiggled:0,stumbled:0,mines:ST.mines,bands:(ST.bands>0?2+ST.bands:0)+(pack?2:0),pack,rush:0,jump:0,used:{},airflips:0,ps:0};
+ R={f:0,dmg:0,cash:0,hitCash:0,bonusCash:0,best:0,bestCash:0,heads:0,flips:0,maxC:0,boost:2+ST.charges,bu:0,hz:0,crits:0,lost:0,time:0,flash:0,perf,bull,hits:0,step:0,lastBoost:-999,lastHaz:-999,burst:0,nextCrit:0,done:{},types:{},br:{},gh:{},dn:D.length,nn:n,fin:0,saves:ST.saves,auto:0,savedOnce:0,wiggled:0,stumbled:0,mines:ST.mines,bands:(ST.bands>0?2+ST.bands:0)+(pack?2:0),pack,rush:0,jump:0,used:{},airflips:0,ps:0,dom:0,otOn:0,newBest:0,collected:0,lasted:0,spT:0,camLocked:0};
  const pm=perf?1.7:1;
  D.forEach((d,di)=>{cur(d);LM.forEach(l=>{const f=hpr*(pack?1.25:1);l.max*=f;l.hp*=f});
   const jf=di?1+(Math.random()-.5)*.25:1,pw=(2.6+ST.push)*(.5+.5*m)*(perf?1.35:1)*jf,w=.014*pw*(1+ST.spin*pm)*(di?1+(Math.random()-.5)*.5:1),h0=pts[HIP];
@@ -297,6 +301,8 @@ function breakLimb(i){
  if(i==0){LM.forEach((l,j)=>{if(!l.broken)R.br[j]=1;l.broken=1;l.lvl=Math.max(l.lvl,2);l.bleed=120});R.tear=1}
  if(i==1&&R.f<180)R.fastHead=1;
  if(R.bands>0){R.bands--;L.fix=R.f+90}
+ if(i>0)R.dom=8; // domino effect window opens on every limb break
+ if(ST.last&&LM.reduce((s,L,ix)=>s+(ix>0&&L.broken),0)>=9){bonus(200*ST.last,'LAST LAUGH!','#ff5f5f');R.lasted=1;shake+=12}
  const e=pts[2*i+1];bonus(i==0?80:12,i==0?'TOTAL TEARDOWN!':'SNAP!','#f55');shake+=8;snap();
  for(let k=0;k<14;k++)parts.push({x:e.x,y:e.y,vx:(Math.random()-.5)*8,vy:-Math.random()*6,l:35,c:'#fff',s:3});
  spray(e.x,e.y,i==0?70:40,5);
@@ -323,12 +329,17 @@ function hit(p,imp,tread,onFloor){
  CD.ll=p.l;CD.llf=R.f;
  let m=ST.dmg+(R.rush>R.f?.5:0)+(R.pack?.25:0)+R.burst;R.burst=0;if(Math.abs(CD.av)>.12)m+=ST.wreck;
  let dmg=imp*K.base*(1+Math.min(5,m))*(p.head?2:1)*(1+Math.min(20,CD.cb-1)*.06)*(1+Math.min(30,R.flips)*.05)*(1+ST.speed*Math.min(imp,20)/10)*dt;
+ if(ST.spidey&&CD.i==0)dmg*=1+.3*ST.spidey;
  if(R.hits==1&&ST.glass){dmg*=1+1.5*ST.glass;R.glassHit=1;pop(p.x,p.y-40,'GLASS BONES!','#bff',16)}
  const crit=R.nextCrit||Math.random()<ST.crit;R.nextCrit=0;
  if(crit){dmg*=3+ST.critPow;R.crits++;S.st.crits++}
  if((imp>14||crit)&&R.f-lastFreeze>30){lastFreeze=R.f;freeze=crit?4:3;punch=Math.max(punch,Math.min(1,imp/22))}if(crit)flashA=.3;
  const loose=gone(p.l);if(loose)dmg*=.5; // fallen-off limbs still score, but only half
+ const beat=ST.hitrec&&R.best>0?dmg-R.best:0; // how much this hit beats the run's best so far
  let g=dmg*cashM();if(p.head)g*=1+ST.nodive;if(crit)g*=1+ST.papa;if(R.perf&&ST.pstreak)g*=1+ST.pstreak*R.ps;
+ if(ST.ot&&R.f>2400){if(!R.otOn){R.otOn=1;pop(p.x,p.y-60,'OVERTIME!','#ffd23f',20)}g*=1+.25*ST.ot}
+ if(R.dom>0){R.dom--;g*=1+.15*ST.domino}
+ if(beat>0){const rb=beat*cashM()*.5*ST.hitrec;g+=rb;R.hitCash+=rb;R.newBest=1}
  R.dmg+=dmg;R.cash+=g;R.hitCash+=g;S.cash+=g;S.earned+=g;S.total+=g;R.best=Math.max(R.best,dmg);R.bestCash=Math.max(R.bestCash,g);
  if(p.head){R.heads++;S.st.heads++}R.flash=8;
  const big=imp>8;
@@ -445,7 +456,11 @@ function endRun(){
  R.hjPct=0;if(ST.hj){R.hjPct=Math.min(.2*ST.hj,R.jump*.0015*ST.hj);ex+=R.cash*R.hjPct}
  R.replayed=0;if(ST.finale&&R.bestCash>0){ex+=R.bestCash*ST.finale;R.replayed=1}
  if(R.bull)ex+=R.cash*.5;
+ const nb=Object.keys(R.br).length;if(ST.collect){ex+=R.cash*.08*nb*ST.collect;if(nb>=10){ex+=R.cash*.6*ST.collect;R.collected=1}}
+ if(ST.drift&&R.perf)ex+=R.cash*.25*ST.drift;
  R.extra=ex;S.cash+=ex;S.earned+=ex;S.total+=ex;R.cash+=ex;
+ // adaptive dummy strength: aim for runs that end with a few parts still attached
+ S.st.lastLost=mxl;S.st.hpA=Math.max(.7,Math.min(1.9,(S.st.hpA||1)*(mxl>=9?1.2:mxl>=7?1:mxl<=5?.94:1)*(R.time>45?.96:1))); // aiming for runs that end with a few parts still on
  R.hrLoss=0;R.jp=0;
  if(ST.hr){const loss=R.cash*Math.max(.03,.15-.03*(ST.hr-1));R.hrLoss=loss;S.cash-=loss;S.earned-=loss;
   if(Math.random()<.02){const w=R.cash*12;S.cash+=w;S.earned+=w;S.total+=w;R.jp=1;R.jpWin=w;toast('🎰 JACKPOT! +$'+fmt(w))}}
@@ -456,6 +471,11 @@ function endRun(){
  $('box').innerHTML=`<h2>${rec?'🏆 NEW RECORD! ':''}${deathMsg()}</h2><div class="g">${row('Damage',fmt(R.dmg))}${row('Cash earned','$'+fmt(R.cash))}${row('End bonuses','$'+fmt(R.extra))}${R.bull?row('Bullseye','x1.5 cash'):''}${R.ljPct?row('Long jump','+'+Math.round(R.ljPct*100)+'%'):''}${ST.hj?row('High jump',Math.round(R.jump)+' (+'+Math.round(R.hjPct*100)+'%)'):''}${R.replayed?row('Instant Replay','+$'+fmt(R.bestCash*ST.finale)):''}${ST.hr?(R.jp?row('High Roller','JACKPOT +$'+fmt(R.jpWin)):row('High Roller','-$'+fmt(R.hrLoss))):''}${row('Best hit',fmt(R.best))}${row('Flips',R.flips)}${row('Max combo','x'+R.maxC)}${row('Props hit',R.hz)}${row('Limbs lost',R.lost)}${row('Steps',R.step+'/'+n)}${D.length>1?row('Dummies',D.length):''}${row('Time',R.time.toFixed(1)+'s')}</div><div style="color:var(--mut);margin-bottom:10px">🪦 "${rnd(EP)}"</div><button class="big" id="again">AGAIN! (Space)</button>`;
  $('res').style.display='flex';$('again').onclick=again;dirty=1;save();
 }
+function spawnDummy(){const d=makeDummy(D.length);D.push(d);cur(d);
+ const pw=(2.6+ST.push)*.875,w=.014*pw*(1+ST.spin),h0=pts[HIP];
+ pts.forEach(p=>{const f=1+(Y0-4-p.y)/160,dx=p.x-h0.x,dy=p.y-h0.y;p.px=p.x-pw*f/2+dy*w/2;p.py=p.y+pw*(.4+ST.hop)/2-dx*w/2});
+ S.st.maxDummies=Math.max(S.st.maxDummies,D.length);whoosh();
+ for(let k=0;k<10;k++)parts.push({x:h0.x,y:h0.y+12,vx:(Math.random()-.5)*4-2,vy:Math.random()*3,l:24,c:'#ffd23f',s:4})}
 function again(){$('res').style.display='none';stains=[];parts=[];calc(false);newZone();build();mode='ready';readyT=0;meter.v=0;pops=[];dirty=1}
 function start(){started=true;$('title').style.display='none';try{ac()}catch(e){}}
 function act(){if(!started){start();return}if(mode=='ready')shove();else if(mode=='run')useAbility(S.eq);else if(mode=='result')again()}
@@ -463,14 +483,14 @@ function act(){if(!started){start();return}if(mode=='ready')shove();else if(mode
 function step(){
  if(CHEAT_INFINITE_MONEY){S.cash=Math.max(S.cash,1e15);S.earned=Math.max(S.earned,1e15)}
  if(ST.esc){escPhase+=ST.esc*.0105;if(escPhase>=1){escPhase-=1;escWrap()}layout(true)}else if(escPhase){escPhase=0;layout(true)}else layout(false);
- if(mode=='ready'){readyT++;meter.v+=meter.d*.022*(1-ST.slow);if(meter.v>=1){meter.v=1;meter.d=-1}if(meter.v<=0){meter.v=0;meter.d=1}cam.x+=(X0+160-cam.x)*.08;cam.y+=(Y0+100-cam.y)*.08;cam.zm+=(1-cam.zm)*.08;
+ if(mode=='ready'){readyT++;if(ST.drift){ZPh+=.016*Math.max(.2,1-.25*(ST.drift-1));ZC=.5+.34*Math.sin(ZPh)}meter.v+=meter.d*.022*(1-ST.slow);if(meter.v>=1){meter.v=1;meter.d=-1}if(meter.v<=0){meter.v=0;meter.d=1}cam.x+=(X0+160-cam.x)*.08;cam.y+=(Y0+100-cam.y)*.08;cam.zm+=(1-cam.zm)*.08;
   if(ST.autop>0&&S.autoOn&&started&&readyT>70){ // the Autopusher: never a bullseye, that is yours to earn
    if(Math.random()<.2+.15*(ST.autop-1))meter.v=ZC+(Math.random()<.5?-1:1)*(BULL+.01+Math.random()*(mw()/2-BULL-.02));else{let v=.1+Math.random()*.8;if(Math.abs(v-ZC)<mw()/2+.03)v=ZC>.5?.12:.88;meter.v=v}
    shove()}}
  if(mode=='result'&&ST.autop>0&&S.autoOn&&++resultT>150)again();
  if(mode=='run'&&freeze>0)freeze--;
  else if(mode=='run'){
-  R.f++;let alive=0,cx=0,cy=0,vsx=0,vsy=0,mxs=R.step,stall=false;
+  R.f++;let alive=0,cx=0,cy=0,vsx=0,vsy=0,mxs=R.step,stall=false;const trackers=[];
   for(const j in PUN){const pu=PUN[j];
    if(pu.t>0){pu.t++;const old=pu.off;
     if(pu.t>=3&&pu.t<=7)pu.off=Math.min(90,pu.off+18);else if(pu.t>22)pu.off=Math.max(0,pu.off-3.5); // the step slams up in 5 frames, holds, then sinks back
@@ -504,13 +524,34 @@ function step(){
     mxs=Math.max(mxs,Math.min(n,Math.max(0,Math.floor((h.x-X0)/SW)+1)));
     if(!d.done){alive++;if(d.bs<2.2&&d.air<8)stall=true}
    }
-   cx+=pts[HIP].x;cy+=pts[HIP].y;vsx+=(pts[HIP].x-pts[HIP].px)*2;vsy+=(pts[HIP].y-pts[HIP].py)*2}
+   cx+=pts[HIP].x;cy+=pts[HIP].y;vsx+=(pts[HIP].x-pts[HIP].px)*2;vsy+=(pts[HIP].y-pts[HIP].py)*2;
+   const nint=LM.reduce((s,L,ix)=>s+(ix>0&&!L.broken),0); // camera only cares about dummies that still have parts attached; loose single parts never pull it
+   if(nint>0){let tx2=0,ty2=0,c2=0;pts.forEach(p=>{if(gone(p.l))return;tx2+=p.x;ty2+=p.y;c2++});
+    if(c2)trackers.push({x:tx2/c2,y:ty2/c2,w:1+nint/9,i:d.i})}}
   while(R.step<mxs){R.step++;S.st.steps++}
   if(ST.auto>0&&R.auto<ST.auto&&R.boost>0&&R.f>90&&stall){R.auto++;pop(pts[HIP].x,pts[HIP].y-70,'AUTOPILOT!','#8ff',20);useAbility('boost',true)}
-  const nd=D.length,ax=cx/nd,col=Math.min(n,Math.max(0,Math.floor((ax-X0)/SW)+1)),gy=rects[col].t,vx=vsx/nd,vy=vsy/nd;
-  const tx=ax+90,ty=Math.max(cy/nd,gy-90); // same follow target as before...
-  cam.x+=(tx-cam.x)*Math.min(.85,.1+Math.abs(tx-cam.x)/250);cam.y+=(ty-cam.y)*Math.min(.85,.1+Math.abs(ty-cam.y)/200); // ...but it chases harder and faster the farther he gets from the centre
-  cam.zm+=(1-cam.zm)*.1;
+  if(ST.factory&&R.f>120&&!D.slice(0,R.dn).every(d=>d.done)){ // the factory keeps feeding the stairs while your own dummies are still going
+   R.spT++;const iv=Math.max(30,90-15*(ST.factory-1));
+   if(R.spT>=iv&&D.length<R.dn+6+4*ST.factory){R.spT=0;spawnDummy()}}
+  if(ST.factory){ // free camera: drag to pan, scroll to zoom. Until you drag, it gently tracks the action.
+   if(trackers.length&&!R.camLocked){let tx3=0,ty3=0,sw3=0;for(const q of trackers){tx3+=q.x*q.w;ty3+=q.y*q.w;sw3+=q.w}
+    if(sw3){cam.x+=(tx3/sw3+90-cam.x)*.03;cam.y+=(ty3/sw3-cam.y)*.03}}
+   cam.zm+=(1-cam.zm)*.02}
+  else if(trackers.length){ // follow the closest-together bunch of intact dummies, weighted by how intact they are
+   let bunch=trackers,twx=0,twy=0;
+   for(let k2=0;k2<2;k2++){let sx2=0,sy2=0,sw=0;
+    for(const q of bunch){sx2+=q.x*q.w;sy2+=q.y*q.w;sw+=q.w}
+    if(!sw)break;twx=sx2/sw;twy=sy2/sw;
+    if(k2==0){const keep=trackers.filter(q=>Math.hypot(q.x-twx,q.y-twy)<420);if(keep.length)bunch=keep}}
+   let spread=0;for(const q of bunch)spread=Math.max(spread,Math.hypot(q.x-twx,q.y-twy));
+   const col=Math.min(n,Math.max(0,Math.floor((twx+90-X0)/SW)+1)),gy=rects[col].t;
+   const tx=twx+90,ty=Math.max(twy,gy-90);
+   cam.x+=(tx-cam.x)*Math.min(.85,.1+Math.abs(tx-cam.x)/250);cam.y+=(ty-cam.y)*Math.min(.85,.1+Math.abs(ty-cam.y)/200);
+   const zt=Math.max(.5,Math.min(1,1/(1+spread/700)));cam.zm+=(zt-cam.zm)*.08} // spread out = zoom out
+  else{const nd=D.length,ax=cx/nd,col=Math.min(n,Math.max(0,Math.floor((ax-X0)/SW)+1)),gy=rects[col].t;
+   const tx=ax+90,ty=Math.max(cy/nd,gy-90);
+   cam.x+=(tx-cam.x)*Math.min(.85,.1+Math.abs(tx-cam.x)/250);cam.y+=(ty-cam.y)*Math.min(.85,.1+Math.abs(ty-cam.y)/200);
+   cam.zm+=(1-cam.zm)*.1}
   if(alive==0||R.f>30000)endRun();
  }
  shake*=.88;punch*=.85;flashA*=.85;for(const p of pops){p.y-=.6;p.l--}pops=pops.filter(p=>p.l>0);
@@ -551,6 +592,18 @@ function drawDummy(){
  const hip=pts[HIP],kk=Math.min(n,Math.max(0,Math.floor((hip.x-X0)/SW)+1)),gy=rects[kk].t,dd=gy-hip.y;
  if(dd>0&&dd<300){ctx.fillStyle=`rgba(0,0,0,${.3*(1-dd/300)})`;ctx.beginPath();ctx.ellipse(hip.x,gy,28*(1-dd/420),5,0,0,7);ctx.fill()}
  const SKI=S.skin,SKN_=SK[SKI]||SK[0];ctx.lineCap='round';ctx.textAlign='center';
+ if(ST.spidey&&CD.i==0){ // spider limbs: two extra arms and two extra legs, purely decorative wiggles
+  const up=pts[1],lo=pts[0],ta=Math.atan2(up.y-lo.y,up.x-lo.x)+Math.PI/2,ph=fr/9;
+  ctx.strokeStyle=tint(SKN_[1],0);ctx.lineWidth=4;ctx.fillStyle=tint(SKN_[1],0);
+  for(let k=0;k<4;k++){const arm=k<2,side=k%2?1:-1,ln=arm?17:21;
+   const ox=arm?up.x:lo.x,oy=arm?up.y:lo.y;
+   const px2=-Math.cos(ta)*side,py2=-Math.sin(ta)*side; // perpendicular to the body
+   const wob=Math.sin(ph*1.7+k*1.9)*.3,drop=arm?-.5+Math.sin(ph+k)*.2:.6+Math.cos(ph*1.2+k)*.2;
+   const jx=ox+px2*ln*.55, jy=oy+py2*ln*.55-ln*drop*.35;
+   const ex2=jx+px2*ln*.5, ey2=jy+py2*ln*.5+ln*drop*.55+ln*wob*.3;
+   ctx.beginPath();ctx.moveTo(ox,oy);ctx.quadraticCurveTo(jx,jy,ex2,ey2);ctx.stroke();
+   ctx.beginPath();ctx.arc(jx,jy,2.2,0,7);ctx.fill();
+   ctx.beginPath();ctx.arc(ex2,ey2,2.8,0,7);ctx.stroke()}}
  for(const pass of[0,1,2])LM.forEach((L,i)=>{const A=pts[2*i],B=pts[2*i+1],bw=i==0?11:i==1?3:6;
   ctx.strokeStyle=pass==0?SKN_[2]:pass==1?tint(SKN_[1],L.lvl):'rgba(255,255,255,.3)';ctx.lineWidth=pass==0?bw+3:pass==1?bw:bw*.3;
   const o=pass==2?-bw*.2:0;ctx.beginPath();ctx.moveTo(A.x+o,A.y+o);ctx.lineTo(B.x+o,B.y+o);ctx.stroke()});
@@ -564,7 +617,7 @@ function draw(){
  if(cv.clientWidth!=W||cv.clientHeight!=H)resize();
  const t=performance.now()/1000;
  ctx.setTransform(DPR,0,0,DPR,0,0);backdrop(t);
- const z=Math.max(.45,Math.min(H/430,W/700))*(1+punch*.035)*cam.zm;
+ const z=baseZ()*(1+punch*.035)*cam.zm;
  ctx.save();ctx.translate(W/2+(Math.random()-.5)*shake,H/2+(Math.random()-.5)*shake);ctx.scale(z,z);ctx.translate(-cam.x,-cam.y);
  const vx0=cam.x-W/2/z-80,vx1=cam.x+W/2/z+80;
  if(vx0<X0){ // the house
@@ -645,7 +698,7 @@ function render(){
    return`<div class="card ${eq||own||c<=S.cash?'':'lock'}" style="${eq?'border-left-color:#35c866':''}"><div class="ic">${ic}</div><div class="tx"><b>${n2}</b>${eq?' <span class="lv">EQUIPPED</span>':''}<br><small>${d}</small></div><button data-ab="${id}" ${eq||(!own&&c>S.cash)?'disabled':''}>${eq?'ON':own?'Equip':'$'+fmt(c)}</button></div>`}).join('')}
  if(tab=='ach')h+=`<p class="lv">Each award: +0.5% cash (max +50%). Now x${achM().toFixed(2)}. Skins unlock with awards.</p>`+AC_.map(a=>`<div class="card ${S.ach[a.id]?'':'lock'}"><div class="ic">${S.ach[a.id]?'🏆':'🔒'}</div><div class="tx"><b>${a.n}</b><br><small>${a.d}</small></div></div>`).join('');
  if(tab=='sk')h+=SK.map((k,i)=>{const ok=nAch()>=k[3];return`<div class="card ${ok?'':'lock'}"><div class="ic">🧍</div><div class="tx"><b>${k[0]}</b><br><small>${ok?(S.skin==i?'Equipped':'Unlocked'):'Needs '+k[3]+' awards'}</small></div><button data-sk="${i}" ${ok&&S.skin!=i?'':'disabled'}>${S.skin==i?'ON':ok?'Wear':'🔒'}</button></div>`}).join('');
- if(tab=='pre'){const g=fameGain(),need=rebootNeed(),ok=S.earned>=need&&g>=1;h+=`<div class="card"><div class="tx"><b>⭐ Reboot the Franchise</b><br><small>Reset cash and upgrades. Each Fame = +15% cash forever, and every reboot adds another dummy you push at once (max 10; you push ${nDummies()} now). Each reboot costs more: you need $${fmt(need)} earned this franchise (you have $${fmt(S.earned)}). Shop prices go up each reboot too, matched to your new fame and dummies. Awards, skins and abilities are kept.</small></div></div><button class="big" style="width:100%" data-r="1" ${ok?'':'disabled'}>${ok?(confirmR?'Really? Tap again!':'Reboot for +'+g+' Fame'):'Need $'+fmt(need)+' earned'}</button>`}
+ if(tab=='pre'){const g=fameGain(),need=rebootNeed(),ok=S.earned>=need&&g>=1;h+=`<div class="card"><div class="tx"><b>⭐ Reboot the Franchise</b><br><small>Reset cash and upgrades. Each Fame = +15% cash forever, and every reboot adds another dummy you push at once (max 10; you push ${nDummies()} now). Each reboot costs more: you need $${fmt(need)} earned this franchise (you have $${fmt(S.earned)}). Awards, skins and abilities are kept.</small></div></div><button class="big" style="width:100%" data-r="1" ${ok?'':'disabled'}>${ok?(confirmR?'Really? Tap again!':'Reboot for +'+g+' Fame'):'Need $'+fmt(need)+' earned'}</button>`}
  $('panel').innerHTML=h;$('panel').scrollTop=sc;sig=mkSig();
 }
 $('panel').addEventListener('click',e=>{
@@ -659,11 +712,16 @@ $('panel').addEventListener('click',e=>{
   if(c>=1e6)award('bigticket');if(maxed(q)&&q.k!='pack')award('maxed');if(S.cash<1&&c>=1000)award('broke');if(q.id=='coupon')award('coupon');if(q.id=='autopusher')award('handsfree');if(q.id=='escalator')award('escalnow');
   if(mode=='ready'){const keep=meter.v;build();meter.v=keep}chk();render();save()}}
  else if(t.dataset.r){if(S.earned<rebootNeed())return;if(!confirmR){confirmR=1;render();return}
-  const g=fameGain();const FR=(1+.15*(S.fame+g))/(1+.15*S.fame),od=1+S.st.reboots,nd=Math.min(10,od+1);S.st.pmul=(S.st.pmul||1)*.8*FR*RATE[nd-1]/RATE[od-1];S.fame+=g;if(g>=10)award('reboot1');S.cash=0;S.earned=0;S.lv={};S.pack=0;S.st.reboots++;calc();chk();confirmR=0;tab='up';stains=[];build();mode='ready';$('res').style.display='none';render();save();toast('⭐ Franchise rebooted! +1 dummy')}
+  const g=fameGain();S.fame+=g;if(g>=10)award('reboot1');S.cash=0;S.earned=0;S.lv={};S.pack=0;S.st.reboots++;S.st.pmul=Math.max(1,(1+S.st.reboots)/2);calc();chk();confirmR=0;tab='up';stains=[];build();mode='ready';$('res').style.display='none';render();save();toast('⭐ Franchise rebooted! +1 dummy')}
 });
 addEventListener('keydown',e=>{if(e.code=='KeyR'&&started&&!e.repeat){e.preventDefault();again();return}if(e.code=='Space'||e.code=='Enter'){e.preventDefault();if(document.activeElement)document.activeElement.blur();if(!e.repeat)act()}});
 addEventListener('keyup',e=>{if(e.code=='Space')e.preventDefault()});
-$('stage').addEventListener('pointerdown',e=>{if(mode!='result')act()});
+let drag={on:0,moved:0,x:0,y:0};const freeCam=()=>ST.factory>0&&mode=='run',baseZ=()=>Math.max(.45,Math.min(H/430,W/700));
+$('stage').addEventListener('pointerdown',e=>{drag.on=1;drag.moved=0;drag.x=e.clientX;drag.y=e.clientY;if(mode!='result'&&!freeCam())act()});
+$('stage').addEventListener('pointermove',e=>{if(!drag.on)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;drag.moved+=Math.abs(dx)+Math.abs(dy);
+ if(freeCam()&&drag.moved>8){const z=baseZ()*cam.zm;cam.x-=dx/z;cam.y-=dy/z;R.camLocked=1}});
+addEventListener('pointerup',()=>{if(drag.on&&drag.moved<8&&mode!='result'&&freeCam())act();drag.on=0});
+addEventListener('wheel',e=>{if(freeCam()){e.preventDefault();cam.zm=Math.max(.3,Math.min(2.4,cam.zm*(e.deltaY>0?.9:1.11)))}},{passive:false});
 $('res').addEventListener('pointerdown',e=>e.stopPropagation());$('title').addEventListener('pointerdown',e=>e.stopPropagation());
 $('play').onclick=start;$('mute').textContent=S.mute?'🔇':'🔊';$('mute').onclick=()=>{S.mute=S.mute?0:1;if(S.mute)award('silent');$('mute').textContent=S.mute?'🔇':'🔊';save()};
 $('restart').onclick=e=>{e.currentTarget.blur();if(started)again()};
