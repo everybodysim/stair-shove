@@ -1,0 +1,32 @@
+k=1: $/run=38.2  secs/run=3.8  $/sec=10.14
+k=2: $/run=91.4  secs/run=9.3  $/sec=20.75
+k=3: $/run=161.5  secs/run=5.1  $/sec=31.93
+k=4: $/run=227.0  secs/run=10.4  $/sec=41.51
+k=5: $/run=286.3  secs/run=6.5  $/sec=52.31
+k=6: $/run=346.7  secs/run=15.4  $/sec=62.32
+k=7: $/run=430.8  secs/run=10.6  $/sec=77.30
+k=8: $/run=511.0  secs/run=6.0  $/sec=86.76
+k=9: $/run=612.8  secs/run=6.5  $/sec=95.14
+k=10: $/run=746.3  secs/run=12.1  $/sec=104.28
+
+// ratio of $/sec vs previous dummy count (E_dummy for reboot r = k->k+1):
+reboot 1 (1->2 dummies): 2.046577236214469
+reboot 2 (2->3 dummies): 1.5387884242461989
+reboot 3 (3->4 dummies): 1.3003516958696488
+reboot 4 (4->5 dummies): 1.2599543462889902
+reboot 5 (5->6 dummies): 1.1914221819267097
+reboot 6 (6->7 dummies): 1.240428661887488
+reboot 7 (7->8 dummies): 1.1223797502853774
+reboot 8 (8->9 dummies): 1.0965612655987822
+reboot 9 (9->10 dummies): 1.0960613934684191
+
+// ratio of $/run vs previous:
+reboot 1: 2.392906072025954
+reboot 2: 1.7677563561640217
+reboot 3: 1.4055544700110627
+reboot 4: 1.2609433688903333
+reboot 5: 1.211147660796585
+reboot 6: 1.2425050509594926
+reboot 7: 1.186168037972415
+reboot 8: 1.1991450966230455
+reboot 9: 1.2179590231676403

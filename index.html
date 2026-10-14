@@ -57,7 +57,7 @@ const CHEAT_INFINITE_MONEY=false;
 const $=id=>document.getElementById(id),cv=$('cv'),ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
 function resize(){DPR=Math.min(devicePixelRatio||1,2);W=cv.clientWidth;H=cv.clientHeight;cv.width=W*DPR;cv.height=H*DPR}
-const DEFST={streak:0,perfects:0,limbs:0,boosts:0,bought:0,reboots:0,blood:0,maxStairs:0,hits:0,flips:0,heads:0,steps:0,crits:0,jackpots:0,dmg:0,hz:{},lb:[0,0,0,0,0,0,0,0,0,0],skinRuns:{},maxDummies:1,synergies:0,pr:{},meals:{},bestJump:0,packs:0};
+const DEFST={streak:0,perfects:0,limbs:0,boosts:0,bought:0,reboots:0,blood:0,maxStairs:0,hits:0,flips:0,heads:0,steps:0,crits:0,jackpots:0,dmg:0,hz:{},lb:[0,0,0,0,0,0,0,0,0,0],skinRuns:{},maxDummies:1,synergies:0,pr:{},meals:{},bestJump:0,packs:0,pmul:1};
 const DEF={cash:0,earned:0,total:0,fame:0,best:0,runs:0,lv:{},ach:{},skin:0,blood:1,hideMax:0,mute:0,abil:{boost:1},eq:'boost',pack:0,autoOn:1,st:DEFST};
 function load(){try{const j=JSON.parse(localStorage.getItem('stairshove5'));if(j){const o=Object.assign(structuredClone(DEF),j);o.st=Object.assign(structuredClone(DEFST),j.st||{});return o}}catch(e){}return structuredClone(DEF)}
 let S=load();
@@ -128,7 +128,7 @@ const SCAP={coupon:.25,spons:.2,crit:.5,air:.15,grav:.2,pw:.2,slow:.6,hp:1,stair
 const KEYS=[...new Set(UP.map(q=>q.k))];
 const ORDER=[...UP].sort((a,b)=>a.b-b.b);
 let E={},ST={};
-const cost=q=>q.k=='pack'?q.b:Math.floor(q.b*q.g**lv(q.id)*(1-ST.coupon)*(q.id=='morestairs'?1-ST.stairDisc:1)),maxed=q=>q.m&&lv(q.id)>=q.m,unlocked=q=>S.earned>=q.b*.35||lv(q.id)>0;
+const cost=q=>q.k=='pack'?Math.floor(q.b*(S.st.pmul||1)):Math.floor(q.b*q.g**lv(q.id)*(S.st.pmul||1)*(1-ST.coupon)*(q.id=='morestairs'?1-ST.stairDisc:1)),maxed=q=>q.m&&lv(q.id)>=q.m,unlocked=q=>S.earned>=q.b*.35||lv(q.id)>0;
 function calc(perf){ST={};for(const k of KEYS)ST[k]=0;for(const q of UP){let l=lv(q.id);if(q.pf!=null&&!perf)l=Math.min(l,q.pf);if(l)ST[q.k]+=l*q.p}for(const k in SCAP)ST[k]=Math.min(SCAP[k],ST[k])}
 const hpMult=()=>Math.max(.3,1+ST.hp+.1*ST.hs-.1*ST.glass);
 // ================= SPACEBAR ABILITIES =================
@@ -221,6 +221,10 @@ const nDummies=()=>Math.min(10,1+S.st.reboots);
 const skinsOn=()=>SK.filter(k=>nAch()>=k[3]).length;
 const cashM=()=>(1+.15*S.fame)*achM()*(1+ST.spons)*((R&&R.rush>R.f)?1.5:1)*((R&&R.pack)?1.2:1);
 const rebootNeed=()=>25000*6**S.st.reboots;
+// money/sec per dummy count (1..10), measured headless: 100 fixed-shove runs each, no upgrades.
+// Used to keep prices honest: every reboot multiplies upgrade prices by .8 x fame growth x dummy growth,
+// so maxing an upgrade is never faster than 0.8x the previous franchise (usually slower).
+const RATE=[10.14,20.75,31.93,41.51,52.31,62.32,77.30,86.76,95.14,104.28];
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const LJ=[[750,.05],[1300,.1],[1850,.15],[2400,.2],[2950,.25],[3500,.3]];
 function makeDummy(i){
@@ -641,7 +645,7 @@ function render(){
    return`<div class="card ${eq||own||c<=S.cash?'':'lock'}" style="${eq?'border-left-color:#35c866':''}"><div class="ic">${ic}</div><div class="tx"><b>${n2}</b>${eq?' <span class="lv">EQUIPPED</span>':''}<br><small>${d}</small></div><button data-ab="${id}" ${eq||(!own&&c>S.cash)?'disabled':''}>${eq?'ON':own?'Equip':'$'+fmt(c)}</button></div>`}).join('')}
  if(tab=='ach')h+=`<p class="lv">Each award: +0.5% cash (max +50%). Now x${achM().toFixed(2)}. Skins unlock with awards.</p>`+AC_.map(a=>`<div class="card ${S.ach[a.id]?'':'lock'}"><div class="ic">${S.ach[a.id]?'🏆':'🔒'}</div><div class="tx"><b>${a.n}</b><br><small>${a.d}</small></div></div>`).join('');
  if(tab=='sk')h+=SK.map((k,i)=>{const ok=nAch()>=k[3];return`<div class="card ${ok?'':'lock'}"><div class="ic">🧍</div><div class="tx"><b>${k[0]}</b><br><small>${ok?(S.skin==i?'Equipped':'Unlocked'):'Needs '+k[3]+' awards'}</small></div><button data-sk="${i}" ${ok&&S.skin!=i?'':'disabled'}>${S.skin==i?'ON':ok?'Wear':'🔒'}</button></div>`}).join('');
- if(tab=='pre'){const g=fameGain(),need=rebootNeed(),ok=S.earned>=need&&g>=1;h+=`<div class="card"><div class="tx"><b>⭐ Reboot the Franchise</b><br><small>Reset cash and upgrades. Each Fame = +15% cash forever, and every reboot adds another dummy you push at once (max 10; you push ${nDummies()} now). Each reboot costs more: you need $${fmt(need)} earned this franchise (you have $${fmt(S.earned)}). Awards, skins and abilities are kept.</small></div></div><button class="big" style="width:100%" data-r="1" ${ok?'':'disabled'}>${ok?(confirmR?'Really? Tap again!':'Reboot for +'+g+' Fame'):'Need $'+fmt(need)+' earned'}</button>`}
+ if(tab=='pre'){const g=fameGain(),need=rebootNeed(),ok=S.earned>=need&&g>=1;h+=`<div class="card"><div class="tx"><b>⭐ Reboot the Franchise</b><br><small>Reset cash and upgrades. Each Fame = +15% cash forever, and every reboot adds another dummy you push at once (max 10; you push ${nDummies()} now). Each reboot costs more: you need $${fmt(need)} earned this franchise (you have $${fmt(S.earned)}). Shop prices go up each reboot too, matched to your new fame and dummies. Awards, skins and abilities are kept.</small></div></div><button class="big" style="width:100%" data-r="1" ${ok?'':'disabled'}>${ok?(confirmR?'Really? Tap again!':'Reboot for +'+g+' Fame'):'Need $'+fmt(need)+' earned'}</button>`}
  $('panel').innerHTML=h;$('panel').scrollTop=sc;sig=mkSig();
 }
 $('panel').addEventListener('click',e=>{
@@ -655,7 +659,7 @@ $('panel').addEventListener('click',e=>{
   if(c>=1e6)award('bigticket');if(maxed(q)&&q.k!='pack')award('maxed');if(S.cash<1&&c>=1000)award('broke');if(q.id=='coupon')award('coupon');if(q.id=='autopusher')award('handsfree');if(q.id=='escalator')award('escalnow');
   if(mode=='ready'){const keep=meter.v;build();meter.v=keep}chk();render();save()}}
  else if(t.dataset.r){if(S.earned<rebootNeed())return;if(!confirmR){confirmR=1;render();return}
-  const g=fameGain();S.fame+=g;if(g>=10)award('reboot1');S.cash=0;S.earned=0;S.lv={};S.pack=0;S.st.reboots++;calc();chk();confirmR=0;tab='up';stains=[];build();mode='ready';$('res').style.display='none';render();save();toast('⭐ Franchise rebooted! +1 dummy')}
+  const g=fameGain();const FR=(1+.15*(S.fame+g))/(1+.15*S.fame),od=1+S.st.reboots,nd=Math.min(10,od+1);S.st.pmul=(S.st.pmul||1)*.8*FR*RATE[nd-1]/RATE[od-1];S.fame+=g;if(g>=10)award('reboot1');S.cash=0;S.earned=0;S.lv={};S.pack=0;S.st.reboots++;calc();chk();confirmR=0;tab='up';stains=[];build();mode='ready';$('res').style.display='none';render();save();toast('⭐ Franchise rebooted! +1 dummy')}
 });
 addEventListener('keydown',e=>{if(e.code=='KeyR'&&started&&!e.repeat){e.preventDefault();again();return}if(e.code=='Space'||e.code=='Enter'){e.preventDefault();if(document.activeElement)document.activeElement.blur();if(!e.repeat)act()}});
 addEventListener('keyup',e=>{if(e.code=='Space')e.preventDefault()});
