@@ -209,6 +209,8 @@ const SW=70,SH=44,X0=300,Y0=300,G=.14,K={gx:.015,e:.3,ft:.985,dm:.3,base:.25,win
 const LB=[['torso',[0,-34],[0,-62],160,5,5],['head',[0,-62],[0,-80],70,3,10],['lUA',[0,-60],[-9,-46],50,3,3],['lFA',[-9,-46],[-11,-30],40,3,3],['rUA',[0,-60],[9,-46],50,3,3],['rFA',[9,-46],[11,-30],40,3,3],['lTh',[0,-34],[-6,-17],70,4,4],['lSh',[-6,-17],[-7,0],55,4,4],['rTh',[0,-34],[6,-17],70,4,4],['rSh',[6,-17],[7,0],55,4,4]];
 const HIP=0,HEAD=3;
 const JT0=[[1,0,-.6,.9,2,1],[2,0,-2.6,2.6,4,1],[3,2,-2.4,.2,6,5],[4,0,-2.6,2.6,8,1],[5,4,-2.4,.2,10,9],[6,0,-2,.7,12,0],[7,6,0,2.5,14,13],[8,0,-2,.7,16,0],[9,8,0,2.5,18,17]];
+const PAR={1:0,2:0,3:2,4:0,5:4,6:0,7:6,8:0,9:8}; // limb -> the limb it hangs from
+const gone=i=>{let k=i;while(k>0){if(LM[k].broken)return 1;k=PAR[k]}return 0}; // has this limb (or whatever it hangs from) fallen off the body?
 let n,rects,haz,D=[],pts,LM,JT,CD,mode='ready',cam={x:X0+160,y:Y0+100,zm:1},shake=0,pops=[],parts=[],stains=[],meter={v:0,d:1},readyT=0,dirty=1,TR=new Set(),CR=new Set(),PUN={},resultT=0,escPhase=0,ZC=.5;
 let freeze=0,punch=0,flashA=0,started=false,lastFreeze=-99;const FNT='"Lilita One",Impact,system-ui,sans-serif';
 const BULL=.008,mw=()=>.08+ST.pw,newZone=()=>{ZC=.22+Math.random()*.56};
@@ -321,11 +323,12 @@ function hit(p,imp,tread,onFloor){
  const crit=R.nextCrit||Math.random()<ST.crit;R.nextCrit=0;
  if(crit){dmg*=3+ST.critPow;R.crits++;S.st.crits++}
  if((imp>14||crit)&&R.f-lastFreeze>30){lastFreeze=R.f;freeze=crit?4:3;punch=Math.max(punch,Math.min(1,imp/22))}if(crit)flashA=.3;
+ const loose=gone(p.l);if(loose)dmg*=.5; // fallen-off limbs still score, but only half
  let g=dmg*cashM();if(p.head)g*=1+ST.nodive;if(crit)g*=1+ST.papa;if(R.perf&&ST.pstreak)g*=1+ST.pstreak*R.ps;
  R.dmg+=dmg;R.cash+=g;R.hitCash+=g;S.cash+=g;S.earned+=g;S.total+=g;R.best=Math.max(R.best,dmg);R.bestCash=Math.max(R.bestCash,g);
  if(p.head){R.heads++;S.st.heads++}R.flash=8;
  const big=imp>8;
- pop(p.x,p.y-12,(crit?'CRIT! ':big?['BONK!','THWACK!','OOF!','CRUNCH!','BOING!'][Math.random()*5|0]+' ':'')+'+'+fmt(g)+(CD.cb>1?' x'+CD.cb:''),crit?'#ff4dff':`hsl(${Math.max(0,50-CD.cb*6)},95%,${big?60:50}%)`,big||crit?24:15);
+ pop(p.x,p.y-12,(crit?'CRIT! ':big?['BONK!','THWACK!','OOF!','CRUNCH!','BOING!'][Math.random()*5|0]+' ':'')+'+'+fmt(g)+(loose?' \u00bd':'')+(CD.cb>1?' x'+CD.cb:''),crit?'#ff4dff':loose?'#7fb89a':`hsl(${Math.max(0,50-CD.cb*6)},95%,${big?60:50}%)`,big||crit?24:15);
  shake=Math.min(14,shake+imp*.5);thud(imp);beep(300+Math.min(CD.cb,30)*30,.05,.02);
  if(tread&&imp>5)for(let k=0;k<4;k++)parts.push({x:p.x,y:p.y+p.r,vx:(Math.random()-.5)*3,vy:-Math.random()*1.5,l:28,L:28,a:1,g:.02,c:'#efe4cf',s:4+Math.random()*5});
  for(let k=0;k<(big?10:4);k++)parts.push({x:p.x,y:p.y,vx:(Math.random()-.5)*6,vy:-Math.random()*5,l:30,c:`hsl(${Math.random()*60},95%,60%)`,s:3});
@@ -382,10 +385,10 @@ function clearance(){ // distance from his lowest point to the stair surface rig
 function useAbility(id,forced){
  if(R.boost<=0)return;R.boost--;R.bu++;S.st.boosts++;R.lastBoost=R.f;R.used[id]=1;
  for(const d of D){if(d.done)continue;cur(d);const h=pts[HIP];
-  if(id=='boost'){pts.forEach(p=>{const dx=p.x-h.x,dy=p.y-h.y;p.px-=-dy*.05+2.4;p.py-=dx*.05-4.6});pop(h.x,h.y-40,'BOOST!','#fff',22);for(let k=0;k<16;k++)parts.push({x:h.x,y:h.y+10,vx:(Math.random()-.5)*3-2,vy:Math.random()*4,l:25,c:`hsl(${20+Math.random()*30},100%,60%)`,s:4})}
-  else if(id=='flip'||id=='back'){const dir=id=='flip'?1:-1;d.spn={dir,fr:22};pts.forEach(p=>{const dx=p.x-h.x,dy=p.y-h.y;p.px+=dy*.12*dir;p.py-=dx*.12*dir;p.py+=2.5});pop(h.x,h.y-40,id=='flip'?'FRONTFLIP!':'BACKFLIP!','#9ef',20)}
-  else if(id=='slam'){pts.forEach(p=>{p.py-=9});pop(h.x,h.y-40,'GROUND POUND!','#fa6',20);shake+=5}
-  else if(id=='brake'){pts.forEach(p=>{p.px=p.x-(p.x-p.px)*.2;p.py=p.y-(p.y-p.py)*.2});pop(h.x,h.y-40,'BRAKE!','#f66',20)}
+  if(id=='boost'){pts.forEach(p=>{if(gone(p.l))return;const dx=p.x-h.x,dy=p.y-h.y;p.px-=-dy*.05+2.4;p.py-=dx*.05-4.6});pop(h.x,h.y-40,'BOOST!','#fff',22);for(let k=0;k<16;k++)parts.push({x:h.x,y:h.y+10,vx:(Math.random()-.5)*3-2,vy:Math.random()*4,l:25,c:`hsl(${20+Math.random()*30},100%,60%)`,s:4})}
+  else if(id=='flip'||id=='back'){const dir=id=='flip'?1:-1;d.spn={dir,fr:22};pts.forEach(p=>{if(gone(p.l))return;const dx=p.x-h.x,dy=p.y-h.y;p.px+=dy*.12*dir;p.py-=dx*.12*dir;p.py+=2.5});pop(h.x,h.y-40,id=='flip'?'FRONTFLIP!':'BACKFLIP!','#9ef',20)}
+  else if(id=='slam'){pts.forEach(p=>{if(gone(p.l))return;p.py-=9});pop(h.x,h.y-40,'GROUND POUND!','#fa6',20);shake+=5}
+  else if(id=='brake'){pts.forEach(p=>{if(gone(p.l))return;p.px=p.x-(p.x-p.px)*.2;p.py=p.y-(p.y-p.py)*.2});pop(h.x,h.y-40,'BRAKE!','#f66',20)}
 }
  whoosh();shake+=3;cur(D[0]);
 }
@@ -474,7 +477,7 @@ function step(){
    if(!d.done){
     sub();sub();pts.forEach(p=>p.cd--);if(d.touch)d.af=0;d.air=d.touch?0:d.air+1;d.touch=0;if(d.ice>0)d.ice--;
     const h=pts[HIP],hd=pts[HEAD],a=Math.atan2(hd.y-h.y,hd.x-h.x);
-    if(d.spn&&d.spn.fr>0){d.spn.fr--;const sp=d.spn.dir*.03;pts.forEach(p=>{p.px+=(p.y-h.y)*sp;p.py-=(p.x-h.x)*sp})} // flips keep spinning for a moment
+    if(d.spn&&d.spn.fr>0){d.spn.fr--;const sp=d.spn.dir*.03;pts.forEach(p=>{if(gone(p.l))return;p.px+=(p.y-h.y)*sp;p.py-=(p.x-h.x)*sp})} // flips keep spinning for a moment
     d.bs=pts.reduce((s2,p)=>s2+Math.hypot(p.x-p.px,p.y-p.py),0)/pts.length*2;
     if(d.pa!=null){const dd=wrap(a-d.pa);d.av=d.av*.9+dd*.1;
      if(d.bs>2.5){d.ang+=dd;const fl=Math.floor(Math.abs(d.ang)/(2*Math.PI));
