@@ -607,7 +607,7 @@ function draw(){
   ctx.save();rrect(bx,by,bw,24,8);ctx.clip();const g2=ctx.createLinearGradient(bx,0,bx+bw,0);g2.addColorStop(0,'#ff6b4a');g2.addColorStop(.6,'#ffd23f');g2.addColorStop(1,'#ff8a3a');ctx.globalAlpha=.55;ctx.fillStyle=g2;ctx.fillRect(bx,by,bw*meter.v,24);ctx.globalAlpha=1;
   const zg=ctx.createLinearGradient(0,by,0,by+24);zg.addColorStop(0,'#7dffa0');zg.addColorStop(1,'#1fb85a');ctx.fillStyle=zg;ctx.fillRect(bx+bw*(ZC-w/2),by,bw*w,24);ctx.fillStyle='#e02020';ctx.fillRect(bx+bw*(ZC-BULL),by,bw*BULL*2,24);ctx.restore();
   ctx.fillStyle='#fff';rrect(bx+bw*meter.v-3,by-8,6,40,3);ctx.fill();ctx.beginPath();ctx.moveTo(bx+bw*meter.v-8,by-12);ctx.lineTo(bx+bw*meter.v+8,by-12);ctx.lineTo(bx+bw*meter.v,by-2);ctx.fill();
-  ctx.save();ctx.translate(W/2,by-24);ctx.scale(pulse,pulse);txt(readyT>1500?'...be nice. Or wait. Gandhi?':'CLICK / SPACE to SHOVE!',0,0,22);ctx.restore();
+  ctx.save();ctx.translate(W/2,by-24);ctx.scale(pulse,pulse);txt(readyT>1500?'CLICK / SPACE to SHOVE!':'CLICK / SPACE to SHOVE!',0,0,22);ctx.restore();
   if(S.runs<3)txt('Stop the marker in the GREEN for a PERFECT shove. The thin RED line pays x1.5 cash!',W/2,by+52,13,'#d9e6ff');
  }
  if(mode=='run'){
