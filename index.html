@@ -219,7 +219,7 @@ const HIP=0,HEAD=3;
 const JT0=[[1,0,-.6,.9,2,1],[2,0,-2.6,2.6,4,1],[3,2,-2.4,.2,6,5],[4,0,-2.6,2.6,8,1],[5,4,-2.4,.2,10,9],[6,0,-2,.7,12,0],[7,6,0,2.5,14,13],[8,0,-2,.7,16,0],[9,8,0,2.5,18,17]];
 const PAR={1:0,2:0,3:2,4:0,5:4,6:0,7:6,8:0,9:8}; // limb -> the limb it hangs from
 const gone=i=>{let k=i;while(k>0){if(LM[k].broken)return 1;k=PAR[k]}return 0}; // has this limb (or whatever it hangs from) fallen off the body?
-let n,rects,haz,D=[],pts,LM,JT,CD,mode='ready',ZPh=0,cam={x:X0+160,y:Y0+100,zm:1},shake=0,pops=[],parts=[],stains=[],meter={v:0,d:1},readyT=0,dirty=1,TR=new Set(),CR=new Set(),PUN={},resultT=0,escPhase=0,ZC=.5;
+let n,rects,haz,D=[],pts,LM,JT,CD,mode='ready',ZPh=0,cam={x:X0+160,y:Y0+100,zm:1,tx:X0+160,ty:Y0+100,tz:1},shake=0,pops=[],parts=[],stains=[],meter={v:0,d:1},readyT=0,dirty=1,TR=new Set(),CR=new Set(),PUN={},resultT=0,escPhase=0,ZC=.5;
 let freeze=0,punch=0,flashA=0,started=false,lastFreeze=-99;const FNT='"Lilita One",Impact,system-ui,sans-serif';
 const BULL=.008,mw=()=>.08+ST.pw,newZone=()=>{ZC=.22+Math.random()*.56};
 const wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a};
@@ -483,7 +483,7 @@ function act(){if(!started){start();return}if(mode=='ready')shove();else if(mode
 function step(){
  if(CHEAT_INFINITE_MONEY){S.cash=Math.max(S.cash,1e15);S.earned=Math.max(S.earned,1e15)}
  if(ST.esc){escPhase+=ST.esc*.0105;if(escPhase>=1){escPhase-=1;escWrap()}layout(true)}else if(escPhase){escPhase=0;layout(true)}else layout(false);
- if(mode=='ready'){readyT++;if(ST.drift){ZPh+=.016*Math.max(.2,1-.25*(ST.drift-1));ZC=.5+.34*Math.sin(ZPh)}meter.v+=meter.d*.022*(1-ST.slow);if(meter.v>=1){meter.v=1;meter.d=-1}if(meter.v<=0){meter.v=0;meter.d=1}cam.x+=(X0+160-cam.x)*.08;cam.y+=(Y0+100-cam.y)*.08;cam.zm+=(1-cam.zm)*.08;
+ if(mode=='ready'){readyT++;if(ST.drift){ZPh+=.016*Math.max(.2,1-.25*(ST.drift-1));ZC=.5+.34*Math.sin(ZPh)}meter.v+=meter.d*.022*(1-ST.slow);if(meter.v>=1){meter.v=1;meter.d=-1}if(meter.v<=0){meter.v=0;meter.d=1}cam.tx+=(X0+160-cam.tx)*.08;cam.ty+=(Y0+100-cam.ty)*.08;cam.x+=(cam.tx-cam.x)*.15;cam.y+=(cam.ty-cam.y)*.15;cam.tz+=(1-cam.tz)*.08;cam.zm+=(cam.tz-cam.zm)*.12;
   if(ST.autop>0&&S.autoOn&&started&&readyT>70){ // the Autopusher: never a bullseye, that is yours to earn
    if(Math.random()<.2+.15*(ST.autop-1))meter.v=ZC+(Math.random()<.5?-1:1)*(BULL+.01+Math.random()*(mw()/2-BULL-.02));else{let v=.1+Math.random()*.8;if(Math.abs(v-ZC)<mw()/2+.03)v=ZC>.5?.12:.88;meter.v=v}
    shove()}}
@@ -527,31 +527,33 @@ function step(){
    cx+=pts[HIP].x;cy+=pts[HIP].y;vsx+=(pts[HIP].x-pts[HIP].px)*2;vsy+=(pts[HIP].y-pts[HIP].py)*2;
    const nint=LM.reduce((s,L,ix)=>s+(ix>0&&!L.broken),0); // camera only cares about dummies that still have parts attached; loose single parts never pull it
    if(nint>0){let tx2=0,ty2=0,c2=0;pts.forEach(p=>{if(gone(p.l))return;tx2+=p.x;ty2+=p.y;c2++});
-    if(c2)trackers.push({x:tx2/c2,y:ty2/c2,w:1+nint/9,i:d.i})}}
+    if(c2)trackers.push({x:tx2/c2,y:ty2/c2,w:1+nint/9,i:d.i,fact:d.i>=R.dn,mv:!d.done&&d.bs>2.2})}}
   while(R.step<mxs){R.step++;S.st.steps++}
   if(ST.auto>0&&R.auto<ST.auto&&R.boost>0&&R.f>90&&stall){R.auto++;pop(pts[HIP].x,pts[HIP].y-70,'AUTOPILOT!','#8ff',20);useAbility('boost',true)}
   if(ST.factory&&R.f>120&&!D.slice(0,R.dn).every(d=>d.done)){ // the factory keeps feeding the stairs while your own dummies are still going
    R.spT++;const iv=Math.max(30,90-15*(ST.factory-1));
    if(R.spT>=iv&&D.length<R.dn+6+4*ST.factory){R.spT=0;spawnDummy()}}
-  if(ST.factory){ // free camera: drag to pan, scroll to zoom. Until you drag, it gently tracks the action.
-   if(trackers.length&&!R.camLocked){let tx3=0,ty3=0,sw3=0;for(const q of trackers){tx3+=q.x*q.w;ty3+=q.y*q.w;sw3+=q.w}
-    if(sw3){cam.x+=(tx3/sw3+90-cam.x)*.03;cam.y+=(ty3/sw3-cam.y)*.03}}
-   cam.zm+=(1-cam.zm)*.02}
-  else if(trackers.length){ // follow the closest-together bunch of intact dummies, weighted by how intact they are
-   let bunch=trackers,twx=0,twy=0;
-   for(let k2=0;k2<2;k2++){let sx2=0,sy2=0,sw=0;
-    for(const q of bunch){sx2+=q.x*q.w;sy2+=q.y*q.w;sw+=q.w}
-    if(!sw)break;twx=sx2/sw;twy=sy2/sw;
-    if(k2==0){const keep=trackers.filter(q=>Math.hypot(q.x-twx,q.y-twy)<420);if(keep.length)bunch=keep}}
-   let spread=0;for(const q of bunch)spread=Math.max(spread,Math.hypot(q.x-twx,q.y-twy));
+  if(!(ST.factory&&R.camLocked)){ // free camera after a drag; otherwise the camera picks its own action
+   // who the camera cares about: your own dummies first. Factory dummies only matter once nothing else is moving,
+   // otherwise every spawn yanks the view around.
+   const orig=trackers.filter(q=>!q.fact);
+   let cands=orig.some(q=>q.mv)?orig.filter(q=>q.mv):trackers.filter(q=>q.mv);
+   if(!cands.length)cands=orig.length?orig:trackers;
+   let twx,twy,spread=0;
+   if(cands.length){
+    let anchor=cands[0];for(const q of cands)if(q.x>anchor.x)anchor=q; // the furthest one down the stairs wins
+    const bunch=cands.filter(q=>Math.hypot(q.x-anchor.x,q.y-anchor.y)<520); // keep whoever is near the action, drop the rest
+    let sx2=0,sy2=0,sw=0;for(const q of bunch){sx2+=q.x*q.w;sy2+=q.y*q.w;sw+=q.w}
+    twx=sx2/sw;twy=sy2/sw;
+    for(const q of bunch)spread=Math.max(spread,Math.hypot(q.x-twx,q.y-twy))}
+   else{const nd=D.length;twx=cx/nd;twy=cy/nd} // nothing but loose parts left: average them
    const col=Math.min(n,Math.max(0,Math.floor((twx+90-X0)/SW)+1)),gy=rects[col].t;
    const tx=twx+90,ty=Math.max(twy,gy-90);
-   cam.x+=(tx-cam.x)*Math.min(.85,.1+Math.abs(tx-cam.x)/250);cam.y+=(ty-cam.y)*Math.min(.85,.1+Math.abs(ty-cam.y)/200);
-   const zt=Math.max(.5,Math.min(1,1/(1+spread/700)));cam.zm+=(zt-cam.zm)*.08} // spread out = zoom out
-  else{const nd=D.length,ax=cx/nd,col=Math.min(n,Math.max(0,Math.floor((ax-X0)/SW)+1)),gy=rects[col].t;
-   const tx=ax+90,ty=Math.max(cy/nd,gy-90);
-   cam.x+=(tx-cam.x)*Math.min(.85,.1+Math.abs(tx-cam.x)/250);cam.y+=(ty-cam.y)*Math.min(.85,.1+Math.abs(ty-cam.y)/200);
-   cam.zm+=(1-cam.zm)*.1}
+   const ddx=(tx-cam.tx)*.1,ddy=(ty-cam.ty)*.1,MT=12; // ease the target, capped to 12px/frame so handoffs glide instead of whipping
+   cam.tx+=Math.max(-MT,Math.min(MT,ddx));cam.ty+=Math.max(-MT,Math.min(MT,ddy));
+   cam.x+=(cam.tx-cam.x)*.2;cam.y+=(cam.ty-cam.y)*.2;
+   const zt=cands.length?Math.max(.42,Math.min(1,1/(1+spread/650))):1; // spread out = zoom out, and always show the whole bunch
+   cam.tz+=(zt-cam.tz)*.08;cam.zm+=(cam.tz-cam.zm)*.12}
   if(alive==0||R.f>30000)endRun();
  }
  shake*=.88;punch*=.85;flashA*=.85;for(const p of pops){p.y-=.6;p.l--}pops=pops.filter(p=>p.l>0);
